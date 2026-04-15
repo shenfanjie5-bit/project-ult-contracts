@@ -25,4 +25,5 @@ packages = {find = {where = ["src"]}}
 
 [tool.pytest.ini_options]
 addopts = "-q"
+pythonpath = ["src"]
 testpaths = ["tests"]
