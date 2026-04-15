@@ -93,6 +93,36 @@ def test_python_module_compat_cli_accepts_head_for_same_source(
     assert result_json["events"] == []
 
 
+def test_python_module_compat_cli_accepts_checked_in_baseline_version(
+    tmp_path: pathlib.Path,
+) -> None:
+    output = tmp_path / "result.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "contracts.compat",
+            "--baseline",
+            "0.1.0",
+            "--current",
+            "HEAD",
+            "--output",
+            str(output),
+        ],
+        cwd=PROJECT_ROOT,
+        env={**os.environ, "PYTHONPATH": str(SRC_DIR)},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    result_json = json.loads(output.read_text(encoding="utf-8"))
+    assert result_json["baseline"] == "0.1.0"
+    assert result_json["current"] == "HEAD"
+
+
 def test_contracts_compat_entry_point_is_callable(tmp_path: pathlib.Path) -> None:
     main = EntryPoint(
         name="contracts-compat",

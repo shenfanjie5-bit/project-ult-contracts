@@ -22,12 +22,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--baseline",
         required=True,
-        help="Baseline JSON Schema export directory.",
+        help="Baseline JSON Schema export directory, or checked-in baseline version.",
     )
     parser.add_argument(
         "--current",
         default="HEAD",
-        help="Current JSON Schema export directory, or HEAD to export current source.",
+        help=(
+            "Current JSON Schema export directory, checked-in baseline version, "
+            "or HEAD to export current source."
+        ),
     )
     parser.add_argument(
         "--output",

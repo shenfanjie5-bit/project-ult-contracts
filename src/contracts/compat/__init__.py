@@ -186,7 +186,8 @@ def check_compatibility(
 ) -> CompatibilityCheckResult:
     """加载导出目录并执行兼容性检查。"""
 
-    baseline_schemas = load_schema_directory(baseline)
+    baseline_dir = _resolve_schema_directory(baseline)
+    baseline_schemas = load_schema_directory(baseline_dir)
     baseline_label = str(baseline)
 
     if str(current) == "HEAD":
@@ -200,8 +201,9 @@ def check_compatibility(
                 current_label="HEAD",
             )
 
+    current_dir = _resolve_schema_directory(current)
     current_schemas = _load_schema_directory(
-        current,
+        current_dir,
         allow_missing_schema_files=True,
     )
     return compare_schema_sets(
@@ -210,6 +212,21 @@ def check_compatibility(
         baseline_label=baseline_label,
         current_label=str(current),
     )
+
+
+def _resolve_schema_directory(reference: str | Path) -> Path:
+    candidate = Path(reference)
+    if (candidate / "manifest.json").is_file():
+        return candidate
+
+    version = str(reference)
+    project_root = Path(__file__).resolve().parents[3]
+    for root in (project_root, Path.cwd()):
+        baseline_dir = root / "artifacts" / "baselines" / version / "json_schema"
+        if (baseline_dir / "manifest.json").is_file():
+            return baseline_dir
+
+    return candidate
 
 
 def _compare_schema(
