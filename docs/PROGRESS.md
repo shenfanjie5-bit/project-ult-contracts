@@ -52,7 +52,7 @@
 |-------|------|--------|------|------|
 | ISSUE-006 | 共享枚举与类型基元（GH #7） | P0 | ISSUE-005 | 已完成 |
 | ISSUE-007 | 错误码注册表 contracts.errors（GH #8） | P0 | ISSUE-006 | 已完成 |
-| ISSUE-008 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 未开始 |
+| ISSUE-008 | Ex-0 Metadata / 心跳 schema（GH #9） | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
 | ISSUE-010 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
 | ISSUE-011 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
@@ -87,6 +87,10 @@
 - [x] GH #16 / ISSUE-015：`PYTHONPATH=src python3 -m pytest -q tests/test_alpha_analyzer_protocol.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #16 / ISSUE-015：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #16 / ISSUE-015：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
+- [x] GH #9 / ISSUE-008：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `ex0 ok`
+- [x] GH #9 / ISSUE-008：`PYTHONPATH=src python3 -m pytest -q tests/test_ex0_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #9 / ISSUE-008：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #9 / ISSUE-008：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
 
 ---
 
@@ -126,6 +130,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #9 / ISSUE-008 Ex-0 Metadata / 心跳 schema，记录沙箱验证结果 | GH #9 |
 | 2026-04-15 | 完成 GH #16 / ISSUE-015 AlphaAnalyzer 协议与 `alpha_result` 字段冻结，记录沙箱验证结果 | GH #16 |
 | 2026-04-15 | 完成 GH #13 / ISSUE-012 Formal objects schema 族，记录沙箱验证结果 | GH #13 |
 | 2026-04-15 | 完成 GH #8 / ISSUE-007 错误码注册表 `contracts.errors`，记录沙箱验证结果 | GH #8 |
