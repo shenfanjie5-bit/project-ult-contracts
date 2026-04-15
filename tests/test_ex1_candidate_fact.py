@@ -125,6 +125,20 @@ def test_ex1_candidate_fact_rejects_invalid_field_values(
         schemas.Ex1CandidateFact.model_validate(payload)
 
 
+@pytest.mark.parametrize("field_name", ["fact_content", "source_reference"])
+def test_ex1_candidate_fact_rejects_non_json_structured_values(
+    field_name: str,
+) -> None:
+    schemas = import_schemas()
+    payload = {
+        **valid_payload(),
+        field_name: {"published_at": datetime(2026, 4, 15, 12, 0)},
+    }
+
+    with pytest.raises(pydantic.ValidationError, match="valid JSON value"):
+        schemas.Ex1CandidateFact.model_validate(payload)
+
+
 @pytest.mark.parametrize("field_name", ["submitted_at", "ingest_seq"])
 def test_ex1_candidate_fact_rejects_ingest_metadata(field_name: str) -> None:
     schemas = import_schemas()
@@ -155,3 +169,5 @@ def test_ex1_candidate_fact_json_schema_contract() -> None:
         }
     )
     assert schemas.FORBIDDEN_INGEST_METADATA_FIELDS.isdisjoint(schema["properties"])
+    assert schema["properties"]["fact_content"]["minProperties"] == 1
+    assert schema["properties"]["source_reference"]["minProperties"] == 1

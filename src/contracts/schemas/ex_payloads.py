@@ -4,15 +4,26 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from typing import Annotated, TypeAlias
 
-from pydantic import Field, ValidationInfo, field_validator, model_validator
+from pydantic import (
+    Field,
+    JsonValue,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 from contracts.core import (
     Confidence,
     ContractBaseModel,
+    Direction,
     EntityId,
+    EvidenceRef,
     FactId,
     HeartbeatStatus,
+    Magnitude,
+    SignalId,
     SubsystemId,
     VersionString,
 )
@@ -21,6 +32,7 @@ from contracts.core import (
 FORBIDDEN_INGEST_METADATA_FIELDS: frozenset[str] = frozenset(
     {"submitted_at", "ingest_seq"}
 )
+JsonObject: TypeAlias = Annotated[dict[str, JsonValue], Field(min_length=1)]
 
 
 class BaseExPayload(ContractBaseModel):
@@ -92,16 +104,16 @@ class Ex1CandidateFact(BaseExPayload):
     fact_id: FactId
     entity_id: EntityId
     fact_type: str = Field(min_length=1)
-    fact_content: dict[str, object]
+    fact_content: JsonObject
     confidence: Confidence
-    source_reference: dict[str, object]
+    source_reference: JsonObject
     extracted_at: datetime
 
-    @field_validator("fact_content", "source_reference")
+    @field_validator("fact_content", "source_reference", mode="before")
     @classmethod
     def validate_non_empty_dict(
-        cls, value: dict[str, object], info: ValidationInfo
-    ) -> dict[str, object]:
+        cls, value: object, info: ValidationInfo
+    ) -> object:
         """Reject empty structured payload fields."""
 
         if not value:
@@ -123,9 +135,24 @@ class Ex1CandidateFact(BaseExPayload):
         return extracted_at
 
 
+class Ex2CandidateSignal(BaseExPayload):
+    """Ex-2 candidate signal payload."""
+
+    signal_id: SignalId
+    signal_type: str = Field(min_length=1)
+    direction: Direction
+    magnitude: Magnitude
+    affected_entities: list[EntityId] = Field(min_length=1)
+    affected_sectors: list[str] = Field(min_length=1)
+    time_horizon: str = Field(min_length=1)
+    evidence: list[EvidenceRef] = Field(min_length=1)
+    confidence: Confidence
+
+
 __all__ = [
     "FORBIDDEN_INGEST_METADATA_FIELDS",
     "BaseExPayload",
     "Ex0Metadata",
     "Ex1CandidateFact",
+    "Ex2CandidateSignal",
 ]

@@ -1,0 +1,182 @@
+from __future__ import annotations
+
+import importlib
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+import pydantic
+import pytest
+
+
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
+
+
+def import_schemas() -> object:
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        return importlib.import_module("contracts.schemas")
+    finally:
+        sys.path.remove(str(SRC_DIR))
+
+
+def valid_payload() -> dict[str, object]:
+    return {
+        "signal_id": "signal-1",
+        "signal_type": "sentiment_shift",
+        "direction": "bullish",
+        "magnitude": 0.4,
+        "affected_entities": ["AAPL"],
+        "affected_sectors": ["technology"],
+        "time_horizon": "short_term",
+        "evidence": ["fact-1"],
+        "confidence": 0.7,
+        "subsystem_id": "subsystem-news",
+    }
+
+
+def test_ex2_candidate_signal_public_api_imports() -> None:
+    schemas = import_schemas()
+
+    from contracts.schemas import Ex2CandidateSignal
+
+    assert Ex2CandidateSignal is schemas.Ex2CandidateSignal
+    assert "Ex2CandidateSignal" in schemas.__all__
+
+
+def test_ex2_candidate_signal_accepts_valid_payload() -> None:
+    schemas = import_schemas()
+
+    signal = schemas.Ex2CandidateSignal.model_validate(valid_payload())
+
+    assert signal.signal_id == "signal-1"
+    assert signal.signal_type == "sentiment_shift"
+    assert signal.direction.value == "bullish"
+    assert signal.magnitude == 0.4
+    assert signal.affected_entities == ["AAPL"]
+    assert signal.affected_sectors == ["technology"]
+    assert signal.time_horizon == "short_term"
+    assert signal.evidence == ["fact-1"]
+    assert signal.confidence == 0.7
+    assert signal.subsystem_id == "subsystem-news"
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "signal_id",
+        "signal_type",
+        "direction",
+        "magnitude",
+        "affected_entities",
+        "affected_sectors",
+        "time_horizon",
+        "evidence",
+        "confidence",
+        "subsystem_id",
+    ],
+)
+def test_ex2_candidate_signal_required_fields_are_enforced(
+    field_name: str,
+) -> None:
+    schemas = import_schemas()
+    payload = valid_payload()
+    payload.pop(field_name)
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+@pytest.mark.parametrize("direction", ["unknown", "up"])
+def test_ex2_candidate_signal_rejects_unknown_direction(direction: str) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "direction": direction}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+def test_ex2_candidate_signal_rejects_negative_magnitude() -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "magnitude": -0.01}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+@pytest.mark.parametrize("confidence", [-0.01, 1.01])
+def test_ex2_candidate_signal_rejects_confidence_outside_unit_interval(
+    confidence: float,
+) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "confidence": confidence}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+@pytest.mark.parametrize("field_name", ["signal_type", "time_horizon"])
+def test_ex2_candidate_signal_rejects_empty_string_fields(
+    field_name: str,
+) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), field_name: ""}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    ["affected_entities", "affected_sectors", "evidence"],
+)
+def test_ex2_candidate_signal_rejects_empty_lists(field_name: str) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), field_name: []}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+@pytest.mark.parametrize("field_name", ["submitted_at", "ingest_seq"])
+def test_ex2_candidate_signal_rejects_ingest_metadata(field_name: str) -> None:
+    schemas = import_schemas()
+    payload = {
+        **valid_payload(),
+        field_name: datetime(2026, 4, 15, 12, 5, tzinfo=timezone.utc),
+    }
+
+    with pytest.raises(pydantic.ValidationError, match="ingest metadata"):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+def test_ex2_candidate_signal_json_schema_contract() -> None:
+    schemas = import_schemas()
+
+    schema = schemas.Ex2CandidateSignal.model_json_schema()
+
+    assert set(schema["required"]).issuperset(
+        {
+            "signal_id",
+            "signal_type",
+            "direction",
+            "magnitude",
+            "affected_entities",
+            "affected_sectors",
+            "time_horizon",
+            "evidence",
+            "confidence",
+            "subsystem_id",
+        }
+    )
+    assert schemas.FORBIDDEN_INGEST_METADATA_FIELDS.isdisjoint(schema["properties"])
+    assert schema["properties"]["direction"]["$ref"] == "#/$defs/Direction"
+    assert schema["$defs"]["Direction"]["enum"] == [
+        "bullish",
+        "bearish",
+        "neutral",
+    ]
+    assert schema["properties"]["affected_entities"]["minItems"] == 1
+    assert schema["properties"]["affected_sectors"]["minItems"] == 1
+    assert schema["properties"]["evidence"]["minItems"] == 1
