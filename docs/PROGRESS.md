@@ -59,7 +59,7 @@
 | ISSUE-012 | Formal objects schema 族（GH #13） | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-013 | Cycle 元数据对象 | P0 | ISSUE-006 | 未开始 |
 | ISSUE-014 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
-| ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 未开始 |
+| ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结（GH #16） | P0 | ISSUE-012 | 已完成 |
 | ISSUE-016 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
 | ISSUE-017 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 未开始 |
 | ISSUE-018 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
@@ -83,6 +83,10 @@
 - [x] GH #13 / ISSUE-012：`python3 -m pytest -q tests/test_formal_objects.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #13 / ISSUE-012：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #13 / ISSUE-012：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
+- [x] GH #16 / ISSUE-015：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `alpha analyzer contract ok`
+- [x] GH #16 / ISSUE-015：`PYTHONPATH=src python3 -m pytest -q tests/test_alpha_analyzer_protocol.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #16 / ISSUE-015：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #16 / ISSUE-015：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
 
 ---
 
@@ -122,6 +126,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #16 / ISSUE-015 AlphaAnalyzer 协议与 `alpha_result` 字段冻结，记录沙箱验证结果 | GH #16 |
 | 2026-04-15 | 完成 GH #13 / ISSUE-012 Formal objects schema 族，记录沙箱验证结果 | GH #13 |
 | 2026-04-15 | 完成 GH #8 / ISSUE-007 错误码注册表 `contracts.errors`，记录沙箱验证结果 | GH #8 |
 | 2026-04-15 | 完成 GH #7 / ISSUE-006 共享枚举、类型基元与 `ContractBaseModel`，记录沙箱验证结果 | GH #7 |
