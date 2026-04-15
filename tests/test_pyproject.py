@@ -9,8 +9,6 @@ import tomllib
 from collections.abc import Callable
 from importlib.metadata import EntryPoint
 
-import pytest
-
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
@@ -51,7 +49,7 @@ def test_setuptools_uses_src_layout_package_discovery() -> None:
     assert setuptools_config["package-dir"] == {"": "src"}
 
 
-def test_console_scripts_point_to_export_and_compat_stubs() -> None:
+def test_console_scripts_point_to_export_and_compat_entrypoints() -> None:
     scripts = load_pyproject()["project"]["scripts"]
 
     assert scripts == {
@@ -82,8 +80,23 @@ def test_console_script_entry_points_are_importable_and_invokable(
             )
             continue
 
-        with pytest.raises(NotImplementedError, match="实现见阶段 2"):
-            main()
+        baseline_dir = tmp_path / "compat_baseline"
+        export_main = load_console_script(
+            "contracts-export",
+            scripts["contracts-export"],
+        )
+        assert (
+            export_main(
+                [
+                    "--output-dir",
+                    str(baseline_dir),
+                    "--version",
+                    "0.1.0",
+                ]
+            )
+            == 0
+        )
+        assert main(["--baseline", str(baseline_dir), "--current", "HEAD"]) == 0
 
 
 def test_package_discovery_configuration_includes_contracts_tree() -> None:
@@ -181,7 +194,7 @@ def test_export_cli_module_runs_successfully(tmp_path: pathlib.Path) -> None:
     assert (output_dir / "manifest.json").is_file()
 
 
-def test_compat_placeholder_cli_module_raises_not_implemented() -> None:
+def test_compat_cli_module_requires_baseline_argument() -> None:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(SRC_DIR)
 
@@ -194,9 +207,8 @@ def test_compat_placeholder_cli_module_raises_not_implemented() -> None:
         text=True,
     )
 
-    assert result.returncode != 0
-    assert "NotImplementedError" in result.stderr
-    assert "实现见阶段 2" in result.stderr
+    assert result.returncode == 2
+    assert "the following arguments are required: --baseline" in result.stderr
 
 
 def test_contract_init_modules_have_chinese_docstrings() -> None:
