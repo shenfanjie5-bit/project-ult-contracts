@@ -10,12 +10,14 @@ from pydantic import Field, ValidationInfo, field_validator, model_validator
 from contracts.core import (
     Confidence,
     ContractBaseModel,
+    DeltaId,
     Direction,
     EntityId,
     EvidenceRef,
     FactId,
     HeartbeatStatus,
     Magnitude,
+    NodeId,
     SignalId,
     SubsystemId,
     VersionString,
@@ -141,10 +143,23 @@ class Ex2CandidateSignal(BaseExPayload):
     confidence: Confidence
 
 
+class Ex3CandidateGraphDelta(BaseExPayload):
+    """Ex-3 candidate graph delta payload."""
+
+    delta_id: DeltaId
+    delta_type: str = Field(min_length=1)
+    source_node: NodeId
+    target_node: NodeId
+    relation_type: str = Field(min_length=1)
+    properties: dict[str, object]
+    evidence: list[EvidenceRef] = Field(min_length=1)
+
+
 __all__ = [
     "FORBIDDEN_INGEST_METADATA_FIELDS",
     "BaseExPayload",
     "Ex0Metadata",
     "Ex1CandidateFact",
     "Ex2CandidateSignal",
+    "Ex3CandidateGraphDelta",
 ]
