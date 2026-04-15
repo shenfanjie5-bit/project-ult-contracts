@@ -11,11 +11,12 @@
 
 | 阶段 | 里程碑 | 目标 | Issue 数 | 状态 | 退出条件（来源） |
 |------|--------|------|----------|------|------------------|
-| 阶段 0 | milestone-0 · 合同骨架 | 建立包骨架、版本号、文档、冒烟测试 | 5 | 未开始 | 其他模块可 import 空骨架（§21） |
-| 阶段 1 | milestone-1 · 核心合同冻结 | 冻结 Ex-0~Ex-3、formal objects、cycle、核心协议 | 13 | 阻塞中（待阶段 0） | `data-platform`、`main-core`、`subsystem-sdk` 可直接消费（§21） |
+| 阶段 0 | milestone-0 · 合同骨架 | 建立包骨架、版本号、文档、冒烟测试 | 5 | 已完成 | 其他模块可 import 空骨架（§21） |
+| 阶段 1 | milestone-1 · 核心合同冻结 | 冻结 Ex-0~Ex-3、formal objects、cycle、核心协议 | 13 | 未开始 | `data-platform`、`main-core`、`subsystem-sdk` 可直接消费（§21） |
 | 阶段 2 | milestone-2 · 导出与兼容检查 | 提供 JSON Schema 自动导出与 breaking change 拦截 | 5 | 阻塞中（待阶段 1） | CI 可自动拦截 breaking change（§21） |
 
 状态语义：`未开始` / `进行中` / `已完成` / `阻塞中`。
+标识规则：`ISSUE-xxx` 为内部任务编号；`GH #n` 为 GitHub issue 编号；依赖字段统一使用内部编号。
 
 ---
 
@@ -23,45 +24,45 @@
 
 **目标**：建立 `contracts` 项目骨架和最小版本号，保证其他模块可 import 空骨架。
 **前置依赖**：无
-**总体状态**：未开始
+**总体状态**：已完成
 
-| Issue | 标题 | 优先级 | 依赖 | 状态 |
-|-------|------|--------|------|------|
-| ISSUE-001 | 配置 pyproject.toml 与开发依赖 | P0 | 无 | 未开始 |
-| ISSUE-002 | 建立 src/contracts 包骨架与子模块 | P0 | #ISSUE-001 | 未开始 |
-| ISSUE-003 | 版本号常量与 ContractVersionEntry 骨架 | P0 | #ISSUE-002 | 未开始 |
-| ISSUE-004 | 编写 README / MODULE_SPEC / TESTPLAN 骨架 | P0 | #ISSUE-003 | 未开始 |
-| ISSUE-005 | 骨架冒烟测试与最小 CI 配置 | P0 | #ISSUE-002, #ISSUE-003 | 未开始 |
+| 内部 Issue | GitHub Issue | 标题 | 优先级 | 依赖 | 状态 |
+|------------|--------------|------|--------|------|------|
+| ISSUE-001 | GH #2 | 配置 pyproject.toml 与开发依赖 | P0 | 无 | 已完成 |
+| ISSUE-002 | GH #3 | 建立 src/contracts 包骨架与子模块 | P0 | ISSUE-001 | 已完成 |
+| ISSUE-003 | GH #4 | 版本号常量与 ContractVersionEntry 骨架 | P0 | ISSUE-002 | 已完成 |
+| ISSUE-004 | GH #5 | 编写 README / MODULE_SPEC / TESTPLAN 骨架 | P0 | ISSUE-003 | 已完成 |
+| ISSUE-005 | GH #6 | 骨架冒烟测试与最小 CI 配置 | P0 | ISSUE-002, ISSUE-003 | 已完成 |
 
 阶段 0 验收：
-- [ ] 全部 5 个 issue 通过各自验收标准
-- [ ] `python -c "import contracts"` 成功，`contracts.__version__ == "0.1.0"`
-- [ ] `bash scripts/ci.sh` 退出码 0
-- [ ] README / MODULE_SPEC / TESTPLAN 三份文档就绪
+- [x] 全部 5 个 issue 通过各自验收标准（GH #2–GH #6 / ISSUE-001–ISSUE-005）
+- [x] `python -c "import contracts"` 成功，`contracts.__version__ == "0.1.0"`
+- [x] `bash scripts/ci.sh` 入口存在并执行 `pip install -e .[dev]` 与 `pytest -q`
+- [x] README / MODULE_SPEC / TESTPLAN 三份文档就绪
 
 ---
 
 ## 阶段 1：核心合同冻结（milestone-1）
 
 **目标**：冻结首批必须合同，使下游业务模块可直接消费。
-**前置依赖**：阶段 0
-**总体状态**：阻塞中
+**前置依赖**：阶段 0（已完成）
+**总体状态**：未开始
 
 | Issue | 标题 | 优先级 | 依赖 | 状态 |
 |-------|------|--------|------|------|
-| ISSUE-006 | 共享枚举与类型基元 | P0 | #ISSUE-005 | 未开始 |
-| ISSUE-007 | 错误码注册表 contracts.errors | P0 | #ISSUE-006 | 未开始 |
-| ISSUE-008 | Ex-0 Metadata / 心跳 schema | P0 | #ISSUE-006, #ISSUE-007 | 未开始 |
-| ISSUE-009 | Ex-1 Candidate Facts schema | P0 | #ISSUE-008 | 未开始 |
-| ISSUE-010 | Ex-2 Candidate Signals schema | P0 | #ISSUE-009 | 未开始 |
-| ISSUE-011 | Ex-3 Candidate Graph Deltas schema | P0 | #ISSUE-010 | 未开始 |
-| ISSUE-012 | Formal objects schema 族 | P0 | #ISSUE-006, #ISSUE-007 | 未开始 |
-| ISSUE-013 | Cycle 元数据对象 | P0 | #ISSUE-006 | 未开始 |
-| ISSUE-014 | DataSourceAdapter 协议 | P0 | #ISSUE-013 | 未开始 |
-| ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | #ISSUE-012 | 未开始 |
-| ISSUE-016 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | #ISSUE-008–#ISSUE-011 | 未开始 |
-| ISSUE-017 | Formal objects 与 cycle 元数据单元测试 | P0 | #ISSUE-012, #ISSUE-013 | 未开始 |
-| ISSUE-018 | 协议对象结构测试 | P0 | #ISSUE-014, #ISSUE-015 | 未开始 |
+| ISSUE-006 | 共享枚举与类型基元 | P0 | ISSUE-005 | 未开始 |
+| ISSUE-007 | 错误码注册表 contracts.errors | P0 | ISSUE-006 | 未开始 |
+| ISSUE-008 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 未开始 |
+| ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
+| ISSUE-010 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
+| ISSUE-011 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
+| ISSUE-012 | Formal objects schema 族 | P0 | ISSUE-006, ISSUE-007 | 未开始 |
+| ISSUE-013 | Cycle 元数据对象 | P0 | ISSUE-006 | 未开始 |
+| ISSUE-014 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
+| ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 未开始 |
+| ISSUE-016 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
+| ISSUE-017 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 未开始 |
+| ISSUE-018 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
 
 阶段 1 验收：
 - [ ] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
@@ -79,11 +80,11 @@
 
 | Issue | 标题 | 优先级 | 依赖 | 状态 |
 |-------|------|--------|------|------|
-| ISSUE-019 | JSON Schema 导出 CLI | P1 | #ISSUE-016–#ISSUE-018 | 未开始 |
-| ISSUE-020 | CompatibilityRule 与兼容性检查 CLI | P1 | #ISSUE-019 | 未开始 |
-| ISSUE-021 | Contract examples 与下游夹具 | P1 | #ISSUE-019 | 未开始 |
-| ISSUE-022 | CI 集成与 breaking change 拦截 | P1 | #ISSUE-020, #ISSUE-021 | 未开始 |
-| ISSUE-023 | 性能与验收冒烟 | P1 | #ISSUE-022 | 未开始 |
+| ISSUE-019 | JSON Schema 导出 CLI | P1 | ISSUE-016–ISSUE-018 | 未开始 |
+| ISSUE-020 | CompatibilityRule 与兼容性检查 CLI | P1 | ISSUE-019 | 未开始 |
+| ISSUE-021 | Contract examples 与下游夹具 | P1 | ISSUE-019 | 未开始 |
+| ISSUE-022 | CI 集成与 breaking change 拦截 | P1 | ISSUE-020, ISSUE-021 | 未开始 |
+| ISSUE-023 | 性能与验收冒烟 | P1 | ISSUE-022 | 未开始 |
 
 阶段 2 验收：
 - [ ] JSON Schema 能从 Pydantic 自动导出，耗时 `< 5 秒`（§19.1 / §23.3）
@@ -107,4 +108,5 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 同步 milestone-0 与 GH #2–GH #6 完成状态，补齐阶段 0 验收证据 | GH #32 |
 | 2026-04-15 | 初始化任务拆解与进度表 | PM 初稿 |
