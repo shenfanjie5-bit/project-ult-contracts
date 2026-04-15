@@ -60,7 +60,7 @@
 | ISSUE-013 | GH #14 | Cycle 元数据对象 | P0 | ISSUE-006 | 已完成 |
 | ISSUE-014 | GH #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 已完成 |
 | ISSUE-015 | GH #16 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 已完成 |
-| ISSUE-016 | GH #17 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
+| ISSUE-016 | GH #17 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 已完成 |
 | ISSUE-017 | GH #18 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 已完成 |
 | ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014 / GH #15, ISSUE-015 / GH #16 | 已完成 |
 
@@ -124,6 +124,11 @@
 - [x] GH #19 / ISSUE-018：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #19 / ISSUE-018：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 - [ ] GH #19 / ISSUE-018：`pytest --collect-only tests/test_protocols.py` 与 `pytest -q tests/test_protocols.py tests/test_skeleton_imports.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
+- [x] GH #17 / ISSUE-016：`PYTHONPATH=src python3 -m pytest --collect-only tests/test_ex_payloads.py` 收集 68 个测试，退出码 0
+- [x] GH #17 / ISSUE-016：`PYTHONPATH=src python3 -m pytest -q tests/test_skeleton_imports.py tests/test_ex_payloads.py` 退出码 0；`tests/test_skeleton_imports.py` 中既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #17 / ISSUE-016：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #17 / ISSUE-016：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [ ] GH #17 / ISSUE-016：`pytest --collect-only tests/test_ex_payloads.py` 与 `pytest -q tests/test_skeleton_imports.py tests/test_ex_payloads.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
 
 ---
 
@@ -163,6 +168,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GitHub #17 / ISSUE-016 Ex-0~Ex-3 Pydantic 校验单元测试，记录沙箱验证结果 | GH #17 |
 | 2026-04-15 | 完成 GH #19 / ISSUE-018 协议对象结构测试，记录沙箱验证结果 | GH #19 |
 | 2026-04-15 | 完成 GH #15 / ISSUE-014 DataSourceAdapter 协议，记录沙箱验证结果 | GH #15 |
 | 2026-04-15 | 完成 GH #12 / ISSUE-011 Ex-3 Candidate Graph Deltas schema，记录沙箱验证结果 | GH #12 |
