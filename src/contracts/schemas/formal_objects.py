@@ -8,7 +8,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from contracts.core import ContractBaseModel, CycleId, VersionString, Zone
 from contracts.errors import ContractError, ErrorCode
@@ -30,7 +30,7 @@ class FormalObjectName(str, Enum):
 class FormalObjectBase(ContractBaseModel):
     """Shared formal object envelope."""
 
-    object_id: str
+    object_id: str = Field(min_length=1)
     object_name: FormalObjectName
     zone: Literal[Zone.FORMAL] = Zone.FORMAL
     version: VersionString

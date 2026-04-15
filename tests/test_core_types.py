@@ -138,13 +138,45 @@ def test_confidence_rejects_values_outside_unit_interval(confidence: float) -> N
         ConfidenceContract(confidence=confidence)
 
 
+@pytest.mark.parametrize(
+    "confidence",
+    [True, "0.5", float("inf"), float("-inf"), float("nan")],
+)
+def test_confidence_rejects_coerced_or_non_finite_values(
+    confidence: object,
+) -> None:
+    core = import_core()
+
+    class ConfidenceContract(core.ContractBaseModel):
+        confidence: core.Confidence
+
+    with pytest.raises(pydantic.ValidationError):
+        ConfidenceContract(confidence=confidence)
+
+
 def test_magnitude_rejects_negative_values() -> None:
     core = import_core()
 
     class MagnitudeContract(core.ContractBaseModel):
         magnitude: core.Magnitude
 
-    assert MagnitudeContract(magnitude=0).magnitude == 0
+    assert MagnitudeContract(magnitude=0).magnitude == 0.0
 
     with pytest.raises(pydantic.ValidationError):
         MagnitudeContract(magnitude=-0.01)
+
+
+@pytest.mark.parametrize(
+    "magnitude",
+    [True, "0.5", float("inf"), float("nan")],
+)
+def test_magnitude_rejects_coerced_or_non_finite_values(
+    magnitude: object,
+) -> None:
+    core = import_core()
+
+    class MagnitudeContract(core.ContractBaseModel):
+        magnitude: core.Magnitude
+
+    with pytest.raises(pydantic.ValidationError):
+        MagnitudeContract(magnitude=magnitude)

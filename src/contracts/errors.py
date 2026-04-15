@@ -107,13 +107,13 @@ class ContractError(Exception):
 
     def __init__(
         self,
-        code: ErrorCode,
+        code: ErrorCode | str,
         message: str | None = None,
         *,
         details: Mapping[str, object] | None = None,
     ) -> None:
-        self.code = code
-        self.message = message or get_error_description(code)
+        self.code = code if isinstance(code, ErrorCode) else ErrorCode(code)
+        self.message = message or get_error_description(self.code)
         self.details = dict(details or {})
 
         super().__init__(f"[{self.code.value}] {self.message}")
@@ -126,7 +126,7 @@ def get_error_description(code: ErrorCode | str) -> str:
 
 
 def raise_contract_error(
-    code: ErrorCode,
+    code: ErrorCode | str,
     message: str | None = None,
     *,
     details: Mapping[str, object] | None = None,

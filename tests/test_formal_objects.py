@@ -139,6 +139,15 @@ def test_formal_object_created_at_must_be_timezone_aware() -> None:
         schemas.Report(**payload)
 
 
+@pytest.mark.parametrize("object_id", ["", " "])
+def test_formal_object_id_must_not_be_blank(object_id: str) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "object_id": object_id}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Report(**payload)
+
+
 def test_formal_object_zone_is_fixed_to_formal() -> None:
     schemas = import_schemas()
     payload = {**valid_payload(), "zone": "analytical"}

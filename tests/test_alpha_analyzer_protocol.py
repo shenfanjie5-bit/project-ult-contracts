@@ -172,3 +172,21 @@ def test_fake_alpha_analyzer_satisfies_runtime_protocol() -> None:
     assert isinstance(fake, protocols.AlphaAnalyzer)
     assert result.score == 0.5
     assert result.analyzer_name == fake.analyzer_name
+
+
+def test_analyze_only_alpha_analyzer_satisfies_base_runtime_protocol() -> None:
+    schemas = import_contract_module("contracts.schemas")
+    protocols = import_contract_module("contracts.protocols")
+
+    class AnalyzeOnlyAlphaAnalyzer:
+        def analyze(
+            self,
+            stock: str,
+            context: Mapping[str, object],
+        ) -> schemas.AlphaResult:
+            del stock, context
+            return schemas.AlphaResult(**valid_alpha_result_payload())
+
+    fake = AnalyzeOnlyAlphaAnalyzer()
+
+    assert isinstance(fake, protocols.AlphaAnalyzer)

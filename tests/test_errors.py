@@ -85,6 +85,15 @@ def test_contract_error_preserves_code_and_formats_message() -> None:
     assert "合同校验失败" in str(error)
 
 
+def test_contract_error_normalizes_string_error_code() -> None:
+    errors = import_errors()
+
+    error = errors.ContractError("CONTRACT_VALIDATION_ERROR")
+
+    assert error.code is errors.ErrorCode.CONTRACT_VALIDATION_ERROR
+    assert error.message == "合同校验失败"
+
+
 def test_raise_contract_error_raises_contract_error_with_details() -> None:
     errors = import_errors()
 
