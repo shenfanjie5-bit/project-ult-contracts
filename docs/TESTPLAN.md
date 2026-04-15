@@ -33,6 +33,19 @@
 - 导出产物只作为自动生成 artifact 校验，不作为手写合同源文件。
 - 兼容性检查能识别 breaking change。
 
+### 阶段 2 CI gate
+
+仓库内通用 CI 入口为 `bash scripts/ci.sh`。该脚本必须按以下顺序执行：
+
+- `${PYTHON:-python3} -m pip install -e '.[dev]'`，验证 editable install 与开发依赖安装路径。
+- `python -c 'import contracts, contracts.schemas, contracts.protocols, contracts.export, contracts.compat'`，验证公开模块可导入。
+- `pytest --collect-only -q`，并确认至少收集到一个测试。
+- `pytest -q`，运行完整测试套件。
+- `python -m contracts.export --output-dir <tmp>/json_schema --version ${CONTRACTS_VERSION:-0.1.0}`，导出当前 JSON Schema。
+- `python -m contracts.compat --baseline ${CONTRACTS_BASELINE:-artifacts/baselines/0.1.0/json_schema} --current <tmp>/json_schema`，拦截 breaking change。
+
+`CONTRACTS_BASELINE` 必须指向已发布的 JSON Schema baseline 目录；缺失时 CI 应返回非 0 并提示配置 baseline。`contracts.compat` 的 breaking change 返回码必须由 CI 透传为失败。
+
 ## 兼容测试
 
 对应 §18.4，最小用例包括：

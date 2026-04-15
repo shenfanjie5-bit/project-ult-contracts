@@ -252,12 +252,17 @@ def test_no_disallowed_schema_maintenance_dependencies() -> None:
     assert "jsonschema-manual" not in dependency_text.lower()
 
 
-def test_ci_script_is_executable_and_runs_stage_zero_checks() -> None:
+def test_ci_script_is_executable_and_runs_stage_two_checks() -> None:
     ci_script = PROJECT_ROOT / "scripts" / "ci.sh"
     script = ci_script.read_text(encoding="utf-8")
 
     assert os.access(ci_script, os.X_OK)
     assert "set -euo pipefail" in script
     assert "-m pip install -e '.[dev]'" in script
-    assert "PYTHONPATH" in script
+    assert "PYTHONPATH" not in script
+    assert "contracts, contracts.schemas, contracts.protocols" in script
+    assert "-m pytest --collect-only -q" in script
     assert "-m pytest -q" in script
+    assert "-m contracts.export" in script
+    assert "-m contracts.compat" in script
+    assert "CONTRACTS_BASELINE" in script
