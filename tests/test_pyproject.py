@@ -70,6 +70,28 @@ def test_console_script_entry_points_are_importable_and_invokable() -> None:
             main()
 
 
+def test_package_discovery_configuration_includes_contracts_tree() -> None:
+    setuptools_config = load_pyproject()["tool"]["setuptools"]
+    find_config = setuptools_config["packages"]["find"]
+    where_dirs = [PROJECT_ROOT / path for path in find_config["where"]]
+
+    discovered_packages = {
+        ".".join(init_path.parent.relative_to(where_dir).parts)
+        for where_dir in where_dirs
+        for init_path in where_dir.rglob("__init__.py")
+    }
+
+    assert setuptools_config["package-dir"] == {"": "src"}
+    assert {
+        "contracts",
+        "contracts.compat",
+        "contracts.core",
+        "contracts.export",
+        "contracts.protocols",
+        "contracts.schemas",
+    } <= discovered_packages
+
+
 def test_contract_package_skeleton_is_importable() -> None:
     sys.path.insert(0, str(SRC_DIR))
     try:
