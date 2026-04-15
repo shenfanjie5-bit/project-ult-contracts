@@ -16,7 +16,7 @@
 | 阶段 2 | milestone-2 · 导出与兼容检查 | 提供 JSON Schema 自动导出与 breaking change 拦截 | 5 | 阻塞中（待阶段 1） | CI 可自动拦截 breaking change（§21） |
 
 状态语义：`未开始` / `进行中` / `已完成` / `阻塞中`。
-标识规则：`ISSUE-xxx` 为内部任务编号；`GH #n` 为 GitHub issue 编号；依赖字段统一使用内部编号。
+标识规则：`ISSUE-xxx` 为内部任务编号；`GH #n` 为 GitHub issue 编号；阶段 1 测试项状态与验收证据需同时保留两者映射，避免仅靠内部编号追踪。
 
 ---
 
@@ -55,14 +55,14 @@
 | ISSUE-008 | GH #9 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-009 | GH #10 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 已完成 |
 | ISSUE-010 | GH #11 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 已完成 |
-| ISSUE-011 | GitHub #12 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 已完成 |
+| ISSUE-011 | GH #12 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 已完成 |
 | ISSUE-012 | GH #13 | Formal objects schema 族 | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-013 | GH #14 | Cycle 元数据对象 | P0 | ISSUE-006 | 已完成 |
-| ISSUE-014 | GitHub #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 已完成 |
+| ISSUE-014 | GH #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 已完成 |
 | ISSUE-015 | GH #16 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 已完成 |
 | ISSUE-016 | GH #17 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
 | ISSUE-017 | GH #18 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 已完成 |
-| ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
+| ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014 / GH #15, ISSUE-015 / GH #16 | 已完成 |
 
 阶段 1 验收：
 - [x] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
@@ -100,11 +100,11 @@
 - [x] GH #11 / ISSUE-010：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #11 / ISSUE-010：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 - [ ] GH #11 / ISSUE-010：`pytest -q tests/test_ex2_candidate_signal.py tests/test_ex1_candidate_fact.py tests/test_skeleton_imports.py` 在当前环境返回 `command not found`；已使用 `python3 -m pytest` 等价验证
-- [x] GitHub #12 / ISSUE-011：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `ex3 ok`
-- [x] GitHub #12 / ISSUE-011：`PYTHONPATH=src python3 -m pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
-- [x] GitHub #12 / ISSUE-011：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
-- [ ] GitHub #12 / ISSUE-011：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
-- [ ] GitHub #12 / ISSUE-011：`pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
+- [x] GH #12 / ISSUE-011：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `ex3 ok`
+- [x] GH #12 / ISSUE-011：`PYTHONPATH=src python3 -m pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #12 / ISSUE-011：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #12 / ISSUE-011：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [ ] GH #12 / ISSUE-011：`pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
 - [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `cycle ok`
 - [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 -m pytest -q tests/test_cycle_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #14 / ISSUE-013：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
@@ -114,11 +114,16 @@
 - [x] GH #18 / ISSUE-017：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #18 / ISSUE-017：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 - [ ] GH #18 / ISSUE-017：`pytest --collect-only tests/test_formal_objects_and_cycle.py` 与 `pytest -q tests/test_formal_objects_and_cycle.py tests/test_skeleton_imports.py` 在当前环境返回 `command not found`；已使用 `python3 -m pytest` 等价验证
-- [x] GitHub #15 / ISSUE-014：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `adapter protocol ok`
-- [x] GitHub #15 / ISSUE-014：`PYTHONPATH=src python3 -m pytest -q tests/test_data_source_adapter_protocol.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
-- [x] GitHub #15 / ISSUE-014：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
-- [ ] GitHub #15 / ISSUE-014：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
-- [ ] GitHub #15 / ISSUE-014：`pytest -q tests/test_data_source_adapter_protocol.py tests/test_skeleton_imports.py` 在当前环境返回 `command not found`；已使用 `python3 -m pytest` 等价验证
+- [x] GH #15 / ISSUE-014：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `adapter protocol ok`
+- [x] GH #15 / ISSUE-014：`PYTHONPATH=src python3 -m pytest -q tests/test_data_source_adapter_protocol.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #15 / ISSUE-014：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #15 / ISSUE-014：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [ ] GH #15 / ISSUE-014：`pytest -q tests/test_data_source_adapter_protocol.py tests/test_skeleton_imports.py` 在当前环境返回 `command not found`；已使用 `python3 -m pytest` 等价验证
+- [x] GH #19 / ISSUE-018：`PYTHONPATH=src python3 -m pytest --collect-only tests/test_protocols.py` 收集 4 个测试，退出码 0
+- [x] GH #19 / ISSUE-018：`PYTHONPATH=src python3 -m pytest -q tests/test_protocols.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #19 / ISSUE-018：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #19 / ISSUE-018：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [ ] GH #19 / ISSUE-018：`pytest --collect-only tests/test_protocols.py` 与 `pytest -q tests/test_protocols.py tests/test_skeleton_imports.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
 
 ---
 
@@ -158,8 +163,9 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
-| 2026-04-15 | 完成 GitHub #15 / ISSUE-014 DataSourceAdapter 协议，记录沙箱验证结果 | GitHub #15 |
-| 2026-04-15 | 完成 GitHub #12 / ISSUE-011 Ex-3 Candidate Graph Deltas schema，记录沙箱验证结果 | GitHub #12 |
+| 2026-04-15 | 完成 GH #19 / ISSUE-018 协议对象结构测试，记录沙箱验证结果 | GH #19 |
+| 2026-04-15 | 完成 GH #15 / ISSUE-014 DataSourceAdapter 协议，记录沙箱验证结果 | GH #15 |
+| 2026-04-15 | 完成 GH #12 / ISSUE-011 Ex-3 Candidate Graph Deltas schema，记录沙箱验证结果 | GH #12 |
 | 2026-04-15 | 完成 GH #11 / ISSUE-010 Ex-2 Candidate Signals schema，记录沙箱验证结果 | GH #11 |
 | 2026-04-15 | 完成 GH #18 / ISSUE-017 Formal objects 与 cycle 元数据单元测试，记录沙箱验证结果 | GH #18 |
 | 2026-04-15 | 完成 GH #10 / ISSUE-009 Ex-1 Candidate Facts schema，记录沙箱验证结果 | GH #10 |
