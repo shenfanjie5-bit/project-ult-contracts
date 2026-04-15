@@ -113,6 +113,32 @@ def test_ended_at_before_started_at_is_rejected() -> None:
         )
 
 
+def test_rejected_time_assignment_preserves_existing_cycle_state() -> None:
+    schemas = import_schemas()
+    start_time = started_at()
+    end_time = start_time + timedelta(minutes=30)
+    cycle = schemas.CycleMetadata.model_validate(
+        {
+            "cycle_id": "cycle-20260415-004",
+            "phase": "completed",
+            "started_at": start_time,
+            "ended_at": end_time,
+        }
+    )
+
+    with pytest.raises(pydantic.ValidationError):
+        cycle.started_at = end_time + timedelta(seconds=1)
+
+    assert cycle.started_at == start_time
+    assert cycle.ended_at == end_time
+
+    with pytest.raises(pydantic.ValidationError):
+        cycle.ended_at = start_time - timedelta(seconds=1)
+
+    assert cycle.started_at == start_time
+    assert cycle.ended_at == end_time
+
+
 @pytest.mark.parametrize(
     "field_name",
     ["started_at", "ended_at"],
