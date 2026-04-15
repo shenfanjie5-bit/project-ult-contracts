@@ -18,10 +18,10 @@ contracts-export = "contracts.export.__main__:main"
 contracts-compat = "contracts.compat.__main__:main"
 
 [tool.setuptools]
-packages = {find = {where = ["src"]}}
+package-dir = {"" = "src"}
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
