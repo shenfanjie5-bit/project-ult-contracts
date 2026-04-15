@@ -1,3 +1,33 @@
-"""Ex-0 到 Ex-3、formal objects 与 cycle 对象 Schema 的占位子包。"""
+"""Ex-0 到 Ex-3、formal objects 与 cycle 对象 Schema 子包。"""
 
-__all__: list[str] = []
+from contracts.schemas.formal_objects import (
+    FORMAL_OBJECT_NAMES,
+    FORMAL_OBJECT_REGISTRY,
+    AlphaResultSnapshot,
+    AuditRecord,
+    DashboardSnapshot,
+    FormalObjectBase,
+    FormalObjectName,
+    OfficialAlphaPool,
+    RecommendationSnapshot,
+    ReplayRecord,
+    Report,
+    WorldStateSnapshot,
+    get_formal_object_model,
+)
+
+__all__ = [
+    "FormalObjectName",
+    "FormalObjectBase",
+    "WorldStateSnapshot",
+    "OfficialAlphaPool",
+    "AlphaResultSnapshot",
+    "RecommendationSnapshot",
+    "DashboardSnapshot",
+    "Report",
+    "AuditRecord",
+    "ReplayRecord",
+    "FORMAL_OBJECT_REGISTRY",
+    "FORMAL_OBJECT_NAMES",
+    "get_formal_object_model",
+]
