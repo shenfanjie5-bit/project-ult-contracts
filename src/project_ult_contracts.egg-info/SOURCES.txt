@@ -35,6 +35,8 @@ tests/test_ex1_candidate_fact.py
 tests/test_ex2_candidate_signal.py
 tests/test_ex3_candidate_graph_delta.py
 tests/test_ex_payloads.py
+tests/test_export_cli.py
+tests/test_export_json_schema_contract.py
 tests/test_formal_objects.py
 tests/test_formal_objects_and_cycle.py
 tests/test_milestone1_review_guardrails.py

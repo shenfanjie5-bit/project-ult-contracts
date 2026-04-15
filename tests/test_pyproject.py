@@ -20,7 +20,7 @@ def load_pyproject() -> dict:
     return tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
-def load_console_script(name: str, entry_point: str) -> Callable[[], int]:
+def load_console_script(name: str, entry_point: str) -> Callable[..., int]:
     sys.path.insert(0, str(SRC_DIR))
     try:
         function = EntryPoint(name=name, value=entry_point, group="console_scripts").load()
@@ -60,11 +60,27 @@ def test_console_scripts_point_to_export_and_compat_stubs() -> None:
     }
 
 
-def test_console_script_entry_points_are_importable_and_invokable() -> None:
+def test_console_script_entry_points_are_importable_and_invokable(
+    tmp_path: pathlib.Path,
+) -> None:
     scripts = load_pyproject()["project"]["scripts"]
 
     for name, entry_point in scripts.items():
         main = load_console_script(name, entry_point)
+
+        if name == "contracts-export":
+            assert (
+                main(
+                    [
+                        "--output-dir",
+                        str(tmp_path / "json_schema"),
+                        "--version",
+                        "0.1.0",
+                    ]
+                )
+                == 0
+            )
+            continue
 
         with pytest.raises(NotImplementedError, match="实现见阶段 2"):
             main()
@@ -139,13 +155,38 @@ def test_contract_root_exports_public_skeleton_modules() -> None:
     assert contracts.__version__
 
 
-@pytest.mark.parametrize("module_name", ["contracts.export", "contracts.compat"])
-def test_placeholder_cli_modules_raise_not_implemented(module_name: str) -> None:
+def test_export_cli_module_runs_successfully(tmp_path: pathlib.Path) -> None:
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(SRC_DIR)
+    output_dir = tmp_path / "json_schema"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "contracts.export",
+            "--output-dir",
+            str(output_dir),
+            "--version",
+            "0.1.0",
+        ],
+        cwd=PROJECT_ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert (output_dir / "manifest.json").is_file()
+
+
+def test_compat_placeholder_cli_module_raises_not_implemented() -> None:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(SRC_DIR)
 
     result = subprocess.run(
-        [sys.executable, "-m", module_name],
+        [sys.executable, "-m", "contracts.compat"],
         cwd=PROJECT_ROOT,
         env=environment,
         check=False,
