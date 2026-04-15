@@ -56,7 +56,7 @@
 | ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
 | ISSUE-010 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
 | ISSUE-011 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
-| ISSUE-012 | Formal objects schema 族 | P0 | ISSUE-006, ISSUE-007 | 未开始 |
+| ISSUE-012 | Formal objects schema 族（GH #13） | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-013 | Cycle 元数据对象 | P0 | ISSUE-006 | 未开始 |
 | ISSUE-014 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
 | ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 未开始 |
@@ -67,7 +67,7 @@
 阶段 1 验收：
 - [ ] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
 - [ ] `data-platform`、`main-core`、`subsystem-sdk` 可直接 import 并通过最小 contract test（§23.2）
-- [ ] `backtest_result` 未被注册为 formal object（§16.3 / §6.2）
+- [x] `backtest_result` 未被注册为 formal object（§16.3 / §6.2）
 - [ ] `submitted_at` / `ingest_seq` 未出现在任何 Ex payload 中（§5.4）
 
 阶段 1 当前验收证据：
@@ -79,6 +79,10 @@
 - [x] GH #8 / ISSUE-007：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `errors ok`
 - [x] GH #8 / ISSUE-007：`python3 -m pytest -q tests/test_errors.py tests/test_skeleton_imports.py tests/test_core_types.py` 退出码 0
 - [x] GH #8 / ISSUE-007：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径，并继续执行包边界检查
+- [x] GH #13 / ISSUE-012：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `formal objects ok`
+- [x] GH #13 / ISSUE-012：`python3 -m pytest -q tests/test_formal_objects.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #13 / ISSUE-012：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #13 / ISSUE-012：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
 
 ---
 
@@ -118,6 +122,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #13 / ISSUE-012 Formal objects schema 族，记录沙箱验证结果 | GH #13 |
 | 2026-04-15 | 完成 GH #8 / ISSUE-007 错误码注册表 `contracts.errors`，记录沙箱验证结果 | GH #8 |
 | 2026-04-15 | 完成 GH #7 / ISSUE-006 共享枚举、类型基元与 `ContractBaseModel`，记录沙箱验证结果 | GH #7 |
 | 2026-04-15 | 同步 milestone-0 与 GH #2–GH #6 完成状态，补齐阶段 0 验收证据 | GH #32 |
