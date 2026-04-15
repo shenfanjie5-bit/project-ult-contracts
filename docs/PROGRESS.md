@@ -13,7 +13,7 @@
 |------|--------|------|----------|------|------------------|
 | 阶段 0 | milestone-0 · 合同骨架 | 建立包骨架、版本号、文档、冒烟测试 | 5 | 已完成 | 其他模块可 import 空骨架（§21） |
 | 阶段 1 | milestone-1 · 核心合同冻结 | 冻结 Ex-0~Ex-3、formal objects、cycle、核心协议 | 13 | 进行中 | `data-platform`、`main-core`、`subsystem-sdk` 可直接消费（§21） |
-| 阶段 2 | milestone-2 · 导出与兼容检查 | 提供 JSON Schema 自动导出与 breaking change 拦截 | 5 | 阻塞中（待阶段 1） | CI 可自动拦截 breaking change（§21） |
+| 阶段 2 | milestone-2 · 导出与兼容检查 | 提供 JSON Schema 自动导出与 breaking change 拦截 | 5 | 已完成 | CI 可自动拦截 breaking change（§21），性能冒烟满足 §19 |
 
 状态语义：`未开始` / `进行中` / `已完成` / `阻塞中`。
 标识规则：`ISSUE-xxx` 为内部任务编号；`GH #n` 为 GitHub issue 编号；阶段 1 测试项状态与验收证据需同时保留两者映射，避免仅靠内部编号追踪。
@@ -135,22 +135,29 @@
 ## 阶段 2：导出与兼容检查（milestone-2）
 
 **目标**：提供 JSON Schema 自动导出与 breaking change 拦截。
-**前置依赖**：阶段 1
-**总体状态**：阻塞中
+**前置依赖**：阶段 1 核心 schema / formal object / protocol 已落地（GH #7–GH #19 / ISSUE-006–ISSUE-018）。
+**总体状态**：已完成
 
-| Issue | 标题 | 优先级 | 依赖 | 状态 |
-|-------|------|--------|------|------|
-| ISSUE-019 | JSON Schema 导出 CLI | P1 | ISSUE-016–ISSUE-018 | 未开始 |
-| ISSUE-020 | CompatibilityRule 与兼容性检查 CLI | P1 | ISSUE-019 | 未开始 |
-| ISSUE-021 | Contract examples 与下游夹具 | P1 | ISSUE-019 | 未开始 |
-| ISSUE-022 | CI 集成与 breaking change 拦截 | P1 | ISSUE-020, ISSUE-021 | 未开始 |
-| ISSUE-023 | 性能与验收冒烟 | P1 | ISSUE-022 | 未开始 |
+| 内部 Issue | GitHub Issue | 标题 | 优先级 | 依赖 | 状态 |
+|------------|--------------|------|--------|------|------|
+| ISSUE-019 | GH #20 | JSON Schema 导出 CLI | P1 | ISSUE-016–ISSUE-018 | 已完成 |
+| ISSUE-020 | GH #21 | CompatibilityRule 与兼容性检查 CLI | P1 | ISSUE-019 / GH #20 | 已完成 |
+| ISSUE-021 | GH #22 | Contract examples 与下游夹具 | P1 | ISSUE-019 / GH #20 | 已完成 |
+| ISSUE-022 | GH #23 | CI 集成与 breaking change 拦截 | P1 | ISSUE-020 / GH #21, ISSUE-021 / GH #22 | 已完成 |
+| ISSUE-023 | GH #24 | 性能与验收冒烟 | P1 | ISSUE-022 / GH #23 | 已完成 |
 
 阶段 2 验收：
-- [ ] JSON Schema 能从 Pydantic 自动导出，耗时 `< 5 秒`（§19.1 / §23.3）
-- [ ] compatibility check 能拦截 breaking change，耗时 `< 10 秒`（§19.1 / §23.4）
-- [ ] CI 脚本在检测到 breaking change 时退出码非 0
-- [ ] `fixtures/` 覆盖全部 Ex / formal object / cycle 对象
+- [x] JSON Schema 能从 Pydantic 自动导出，耗时 `< 5 秒`（§19.1 / §23.3）
+- [x] compatibility check 能拦截 breaking change，耗时 `< 10 秒`（§19.1 / §23.4）
+- [x] CI 脚本在检测到 breaking change 时退出码非 0
+- [x] `fixtures/` 覆盖全部 Ex / formal object / cycle 对象
+
+阶段 2 当前验收证据：
+- [x] GH #20 / ISSUE-019：`SCHEMA_MODEL_REGISTRY` 当前导出 16 个 Pydantic JSON Schema；`tests/test_export_json_schema_contract.py` 与 `tests/test_export_cli.py` 覆盖 registry、manifest、schema metadata 与 CLI 入口。
+- [x] GH #21 / ISSUE-020：`tests/test_compat_rules.py` 与 `tests/test_compat_cli.py` 覆盖删除 schema、删除字段、required 变更、字段类型 / `$ref` / `anyOf` 变更和 enum 变更。
+- [x] GH #22 / ISSUE-021：`fixtures/manifest.json` 与 `tests/test_contract_fixtures.py` 覆盖 Ex-0~Ex-3、formal objects 与 cycle fixture 校验。
+- [x] GH #23 / ISSUE-022：`scripts/ci.sh` 按 editable install、import smoke、pytest collect、pytest、JSON Schema 导出、compat gate 顺序执行；`PYTHONPATH=src python3 -m pytest -q tests/test_ci_pipeline.py` 通过，覆盖匹配 baseline 通过与 breaking baseline 失败。
+- [x] GH #24 / ISSUE-023：`PYTHONPATH=src python3 -m pytest -q -s tests/test_milestone2_performance.py` 通过；Python 3.14.3 下导出 16 个 schema 耗时 `0.004220s`，同源兼容检查耗时 `0.001465s`，breaking-change 检查耗时 `0.001262s`。
 
 ---
 
@@ -168,6 +175,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #24 / ISSUE-023 性能与验收冒烟，记录阶段 2 实测数据并将 milestone-2 状态更新为已完成 | GH #24 |
 | 2026-04-15 | 完成 GitHub #17 / ISSUE-016 Ex-0~Ex-3 Pydantic 校验单元测试，记录沙箱验证结果 | GH #17 |
 | 2026-04-15 | 完成 GH #19 / ISSUE-018 协议对象结构测试，记录沙箱验证结果 | GH #19 |
 | 2026-04-15 | 完成 GH #15 / ISSUE-014 DataSourceAdapter 协议，记录沙箱验证结果 | GH #15 |
