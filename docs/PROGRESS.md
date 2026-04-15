@@ -61,7 +61,7 @@
 | ISSUE-014 | GH #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
 | ISSUE-015 | GH #16 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 已完成 |
 | ISSUE-016 | GH #17 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
-| ISSUE-017 | GH #18 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 未开始 |
+| ISSUE-017 | GH #18 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 已完成 |
 | ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
 
 阶段 1 验收：
@@ -95,6 +95,10 @@
 - [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 -m pytest -q tests/test_cycle_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #14 / ISSUE-013：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #14 / ISSUE-013：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [x] GH #18 / ISSUE-017：`python3 -m pytest --collect-only tests/test_formal_objects_and_cycle.py` 收集 5 个测试，退出码 0；当前环境无 `pytest` console script
+- [x] GH #18 / ISSUE-017：`python3 -m pytest -q tests/test_formal_objects_and_cycle.py tests/test_skeleton_imports.py` 退出码 0；当前环境无 `pytest` console script，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #18 / ISSUE-017：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #18 / ISSUE-017：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 
 ---
 
@@ -134,6 +138,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #18 / ISSUE-017 Formal objects 与 cycle 元数据单元测试，记录沙箱验证结果 | GH #18 |
 | 2026-04-15 | 完成 GH #14 / ISSUE-013 Cycle 元数据对象，记录沙箱验证结果 | GH #14 |
 | 2026-04-15 | 完成 GH #9 / ISSUE-008 Ex-0 Metadata / 心跳 schema，记录沙箱验证结果 | GH #9 |
 | 2026-04-15 | 完成 GH #16 / ISSUE-015 AlphaAnalyzer 协议与 `alpha_result` 字段冻结，记录沙箱验证结果 | GH #16 |
