@@ -19,3 +19,9 @@ Execution rule:
 1. read the project doc first
 2. keep work inside this module unless the issue explicitly targets shared contracts
 3. do not treat this scaffold as finished implementation
+
+## 跑测试
+
+```bash
+bash scripts/ci.sh
+```
