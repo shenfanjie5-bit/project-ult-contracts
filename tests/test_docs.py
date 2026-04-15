@@ -130,7 +130,7 @@ def test_progress_marks_completed_stage_zero_without_ambiguous_issue_ids() -> No
     ci_script = PROJECT_ROOT / "scripts" / "ci.sh"
     ci_script_text = read_text(ci_script)
     assert ci_script.is_file()
-    assert "pip install -e .[dev]" in ci_script_text
+    assert "-m pip install -e '.[dev]'" in ci_script_text
     assert "pytest -q" in ci_script_text
     assert README.is_file()
     assert MODULE_SPEC.is_file()

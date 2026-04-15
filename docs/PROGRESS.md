@@ -12,7 +12,7 @@
 | 阶段 | 里程碑 | 目标 | Issue 数 | 状态 | 退出条件（来源） |
 |------|--------|------|----------|------|------------------|
 | 阶段 0 | milestone-0 · 合同骨架 | 建立包骨架、版本号、文档、冒烟测试 | 5 | 已完成 | 其他模块可 import 空骨架（§21） |
-| 阶段 1 | milestone-1 · 核心合同冻结 | 冻结 Ex-0~Ex-3、formal objects、cycle、核心协议 | 13 | 未开始 | `data-platform`、`main-core`、`subsystem-sdk` 可直接消费（§21） |
+| 阶段 1 | milestone-1 · 核心合同冻结 | 冻结 Ex-0~Ex-3、formal objects、cycle、核心协议 | 13 | 进行中 | `data-platform`、`main-core`、`subsystem-sdk` 可直接消费（§21） |
 | 阶段 2 | milestone-2 · 导出与兼容检查 | 提供 JSON Schema 自动导出与 breaking change 拦截 | 5 | 阻塞中（待阶段 1） | CI 可自动拦截 breaking change（§21） |
 
 状态语义：`未开始` / `进行中` / `已完成` / `阻塞中`。
@@ -46,11 +46,11 @@
 
 **目标**：冻结首批必须合同，使下游业务模块可直接消费。
 **前置依赖**：阶段 0（已完成）
-**总体状态**：未开始
+**总体状态**：进行中
 
 | Issue | 标题 | 优先级 | 依赖 | 状态 |
 |-------|------|--------|------|------|
-| ISSUE-006 | 共享枚举与类型基元 | P0 | ISSUE-005 | 未开始 |
+| ISSUE-006 | 共享枚举与类型基元（GH #7） | P0 | ISSUE-005 | 已完成 |
 | ISSUE-007 | 错误码注册表 contracts.errors | P0 | ISSUE-006 | 未开始 |
 | ISSUE-008 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 未开始 |
 | ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
@@ -69,6 +69,13 @@
 - [ ] `data-platform`、`main-core`、`subsystem-sdk` 可直接 import 并通过最小 contract test（§23.2）
 - [ ] `backtest_result` 未被注册为 formal object（§16.3 / §6.2）
 - [ ] `submitted_at` / `ingest_seq` 未出现在任何 Ex payload 中（§5.4）
+
+阶段 1 当前验收证据：
+- [x] GH #7 / ISSUE-006：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `core types ok`
+- [x] GH #7 / ISSUE-006：`python3 -m pytest -q tests/test_skeleton_imports.py tests/test_core_types.py` 退出码 0
+- [x] GH #7 / ISSUE-006：`bash scripts/ci.sh` 退出码 0，并继续执行包边界检查
+- [x] GH #7 / ISSUE-006：`git ls-files | grep -E '(__pycache__|\.DS_Store)$'` 无输出
+- [ ] GH #7 / ISSUE-006：`python -m pip install -e .[dev]` 未在当前沙箱执行成功；当前环境无 `python` 命令，`python3` 受 PEP 668 externally-managed-environment 限制
 
 ---
 
@@ -108,5 +115,6 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #7 / ISSUE-006 共享枚举、类型基元与 `ContractBaseModel`，记录沙箱验证结果 | GH #7 |
 | 2026-04-15 | 同步 milestone-0 与 GH #2–GH #6 完成状态，补齐阶段 0 验收证据 | GH #32 |
 | 2026-04-15 | 初始化任务拆解与进度表 | PM 初稿 |

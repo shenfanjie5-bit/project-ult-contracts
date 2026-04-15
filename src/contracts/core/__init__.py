@@ -1,9 +1,49 @@
-"""共享核心对象、枚举、版本与错误码的占位子包。"""
+"""共享核心对象、枚举、版本与错误码。"""
 
+from contracts.core.base import ContractBaseModel
+from contracts.core.types import (
+    Confidence,
+    CycleId,
+    DeltaId,
+    Direction,
+    EntityId,
+    EvidenceRef,
+    ExType,
+    FactId,
+    HeartbeatStatus,
+    Magnitude,
+    NodeId,
+    Severity,
+    SignalId,
+    SubsystemId,
+    VersionString,
+    Zone,
+)
 from contracts.core.version import (
     CURRENT_VERSION_ENTRY,
     ContractVersionEntry,
     __version__,
 )
 
-__all__ = ["__version__", "ContractVersionEntry", "CURRENT_VERSION_ENTRY"]
+__all__ = [
+    "__version__",
+    "ContractVersionEntry",
+    "CURRENT_VERSION_ENTRY",
+    "ContractBaseModel",
+    "ExType",
+    "Direction",
+    "Severity",
+    "Zone",
+    "HeartbeatStatus",
+    "EntityId",
+    "SubsystemId",
+    "CycleId",
+    "FactId",
+    "SignalId",
+    "DeltaId",
+    "NodeId",
+    "EvidenceRef",
+    "VersionString",
+    "Confidence",
+    "Magnitude",
+]
