@@ -4,13 +4,13 @@ import importlib
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
+import sysconfig
 import tomllib
 from collections.abc import Callable
 from importlib.metadata import EntryPoint
-
-import pytest
 
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -66,12 +66,35 @@ def assert_success(result: subprocess.CompletedProcess[str]) -> None:
     )
 
 
-def is_missing_local_build_backend(result: subprocess.CompletedProcess[str]) -> bool:
-    output = f"{result.stdout}\n{result.stderr}".lower()
-    return (
-        "cannot import 'setuptools.build_meta'" in output
-        or "no module named setuptools" in output
+def local_build_requirement_wheel_dirs() -> list[pathlib.Path]:
+    stdlib_dir = pathlib.Path(sysconfig.get_path("stdlib"))
+    base_prefix = pathlib.Path(sys.base_prefix)
+    candidate_dirs = [
+        stdlib_dir / "ensurepip" / "_bundled",
+        stdlib_dir / "test" / "wheeldata",
+    ]
+    candidate_dirs.extend(
+        parent / "libexec" for parent in [base_prefix, *base_prefix.parents]
     )
+
+    package_dirs: dict[str, pathlib.Path] = {}
+    for candidate_dir in candidate_dirs:
+        if not candidate_dir.is_dir():
+            continue
+        setuptools_wheels = sorted(candidate_dir.glob("setuptools-*.whl"))
+        if any(is_setuptools_69_or_newer(wheel) for wheel in setuptools_wheels):
+            package_dirs.setdefault("setuptools", candidate_dir)
+        if any(candidate_dir.glob("wheel-*.whl")):
+            package_dirs.setdefault("wheel", candidate_dir)
+
+    if {"setuptools", "wheel"} <= package_dirs.keys():
+        return sorted(set(package_dirs.values()))
+    return []
+
+
+def is_setuptools_69_or_newer(wheel_path: pathlib.Path) -> bool:
+    match = re.match(r"setuptools-(\d+)", wheel_path.name)
+    return bool(match and int(match.group(1)) >= 69)
 
 
 def test_project_runtime_dependencies_match_contract_requirements() -> None:
@@ -163,6 +186,7 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     smoke_env.pop("PYTHONPATH", None)
     smoke_env.pop("VIRTUAL_ENV", None)
     smoke_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+    smoke_env["PIP_CACHE_DIR"] = str(tmp_path / "pip-cache")
 
     venv_dir = tmp_path / "installed-artifact-venv"
     create_venv = run_subprocess(
@@ -179,6 +203,30 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     assert_success(create_venv)
 
     python_bin = venv_executable(venv_dir, "python")
+    install_build_requirements_args = [
+        str(python_bin),
+        "-m",
+        "pip",
+        "install",
+        *load_pyproject()["build-system"]["requires"],
+    ]
+    wheel_dirs = local_build_requirement_wheel_dirs()
+    if wheel_dirs:
+        install_build_requirements_args[4:4] = [
+            "--no-index",
+            *[
+                item
+                for wheel_dir in wheel_dirs
+                for item in ("--find-links", str(wheel_dir))
+            ],
+        ]
+    install_build_requirements = run_subprocess(
+        install_build_requirements_args,
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(install_build_requirements)
+
     install_project = run_subprocess(
         [
             str(python_bin),
@@ -193,13 +241,6 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
         cwd=tmp_path,
         env=smoke_env,
     )
-    if install_project.returncode != 0 and is_missing_local_build_backend(
-        install_project
-    ):
-        pytest.skip(
-            "local setuptools build backend is unavailable for isolated "
-            "packaging smoke test"
-        )
     assert_success(install_project)
 
     installed_metadata = run_subprocess(
