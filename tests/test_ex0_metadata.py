@@ -130,6 +130,17 @@ def test_ex0_metadata_rejects_negative_pending_count() -> None:
         schemas.Ex0Metadata.model_validate(payload)
 
 
+@pytest.mark.parametrize("pending_count", [True, "1"])
+def test_ex0_metadata_rejects_coerced_pending_count(
+    pending_count: object,
+) -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "pending_count": pending_count}
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.Ex0Metadata.model_validate(payload)
+
+
 def test_ex0_metadata_rejects_unknown_status() -> None:
     schemas = import_schemas()
     payload = {**valid_payload(), "status": "unknown"}

@@ -5,10 +5,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from contracts.core import (
+    Confidence,
     ContractBaseModel,
+    EntityId,
+    FactId,
     HeartbeatStatus,
     SubsystemId,
     VersionString,
@@ -49,7 +52,7 @@ class Ex0Metadata(BaseExPayload):
     heartbeat_at: datetime
     status: HeartbeatStatus
     last_output_at: datetime | None
-    pending_count: int = Field(ge=0)
+    pending_count: int = Field(ge=0, strict=True)
 
     @field_validator("heartbeat_at")
     @classmethod
@@ -83,8 +86,46 @@ class Ex0Metadata(BaseExPayload):
         return last_output_at
 
 
+class Ex1CandidateFact(BaseExPayload):
+    """Ex-1 candidate fact payload."""
+
+    fact_id: FactId
+    entity_id: EntityId
+    fact_type: str = Field(min_length=1)
+    fact_content: dict[str, object]
+    confidence: Confidence
+    source_reference: dict[str, object]
+    extracted_at: datetime
+
+    @field_validator("fact_content", "source_reference")
+    @classmethod
+    def validate_non_empty_dict(
+        cls, value: dict[str, object], info: ValidationInfo
+    ) -> dict[str, object]:
+        """Reject empty structured payload fields."""
+
+        if not value:
+            raise ValueError(f"{info.field_name} must not be empty")
+
+        return value
+
+    @field_validator("extracted_at")
+    @classmethod
+    def validate_extracted_at_timezone(cls, extracted_at: datetime) -> datetime:
+        """Require timezone-aware extraction timestamps."""
+
+        if (
+            extracted_at.tzinfo is None
+            or extracted_at.tzinfo.utcoffset(extracted_at) is None
+        ):
+            raise ValueError("extracted_at must be timezone-aware")
+
+        return extracted_at
+
+
 __all__ = [
     "FORBIDDEN_INGEST_METADATA_FIELDS",
     "BaseExPayload",
     "Ex0Metadata",
+    "Ex1CandidateFact",
 ]
