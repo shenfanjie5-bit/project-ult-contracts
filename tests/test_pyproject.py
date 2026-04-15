@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
 import pathlib
 import subprocess
@@ -9,9 +10,21 @@ import tomllib
 from collections.abc import Callable
 from importlib.metadata import EntryPoint
 
+import pytest
+
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
+
+
+def venv_executable(venv_dir: pathlib.Path, executable_name: str) -> pathlib.Path:
+    bin_dir = "Scripts" if os.name == "nt" else "bin"
+    suffix = (
+        ".exe"
+        if os.name == "nt" and not executable_name.endswith(".exe")
+        else ""
+    )
+    return venv_dir / bin_dir / f"{executable_name}{suffix}"
 
 
 def load_pyproject() -> dict:
@@ -27,6 +40,38 @@ def load_console_script(name: str, entry_point: str) -> Callable[..., int]:
 
     assert callable(function)
     return function
+
+
+def run_subprocess(
+    args: list[str],
+    *,
+    cwd: pathlib.Path,
+    env: dict[str, str],
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args,
+        cwd=cwd,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def assert_success(result: subprocess.CompletedProcess[str]) -> None:
+    assert result.returncode == 0, (
+        f"command failed: {' '.join(result.args)}\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
+
+
+def is_missing_local_build_backend(result: subprocess.CompletedProcess[str]) -> bool:
+    output = f"{result.stdout}\n{result.stderr}".lower()
+    return (
+        "cannot import 'setuptools.build_meta'" in output
+        or "no module named setuptools" in output
+    )
 
 
 def test_project_runtime_dependencies_match_contract_requirements() -> None:
@@ -109,6 +154,132 @@ def test_console_script_entry_points_are_importable_and_invokable(
             == 0
         )
         assert main(["--baseline", str(baseline_dir), "--current", "HEAD"]) == 0
+
+
+def test_installed_distribution_imports_and_console_scripts_are_invokable(
+    tmp_path: pathlib.Path,
+) -> None:
+    smoke_env = os.environ.copy()
+    smoke_env.pop("PYTHONPATH", None)
+    smoke_env.pop("VIRTUAL_ENV", None)
+    smoke_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+
+    venv_dir = tmp_path / "installed-artifact-venv"
+    create_venv = run_subprocess(
+        [
+            sys.executable,
+            "-m",
+            "venv",
+            "--system-site-packages",
+            str(venv_dir),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(create_venv)
+
+    python_bin = venv_executable(venv_dir, "python")
+    install_project = run_subprocess(
+        [
+            str(python_bin),
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "--no-build-isolation",
+            "--ignore-installed",
+            str(PROJECT_ROOT),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    if install_project.returncode != 0 and is_missing_local_build_backend(
+        install_project
+    ):
+        pytest.skip(
+            "local setuptools build backend is unavailable for isolated "
+            "packaging smoke test"
+        )
+    assert_success(install_project)
+
+    installed_metadata = run_subprocess(
+        [
+            str(python_bin),
+            "-c",
+            "\n".join(
+                [
+                    "import importlib.metadata as metadata",
+                    "import json",
+                    "import contracts",
+                    (
+                        "distribution = "
+                        "metadata.distribution('project-ult-contracts')"
+                    ),
+                    (
+                        "scripts = {entry_point.name: entry_point.value "
+                        "for entry_point in distribution.entry_points "
+                        "if entry_point.group == 'console_scripts'}"
+                    ),
+                    (
+                        "print(json.dumps({"
+                        "'package': contracts.__name__, "
+                        "'version': contracts.__version__, "
+                        "'location': "
+                        "str(distribution.locate_file('').resolve()), "
+                        "'scripts': scripts"
+                        "}, sort_keys=True))"
+                    ),
+                ]
+            ),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(installed_metadata)
+    metadata = json.loads(installed_metadata.stdout)
+    install_location = pathlib.Path(metadata.pop("location"))
+    assert install_location.is_relative_to(venv_dir.resolve())
+    assert metadata == {
+        "package": "contracts",
+        "version": "0.1.0",
+        "scripts": {
+            "contracts-export": "contracts.export.__main__:main",
+            "contracts-compat": "contracts.compat.__main__:main",
+        },
+    }
+
+    contracts_export = venv_executable(venv_dir, "contracts-export")
+    contracts_compat = venv_executable(venv_dir, "contracts-compat")
+    assert contracts_export.is_file()
+    assert contracts_compat.is_file()
+
+    baseline_dir = tmp_path / "installed-baseline"
+    export_result = run_subprocess(
+        [
+            str(contracts_export),
+            "--output-dir",
+            str(baseline_dir),
+            "--version",
+            "0.1.0",
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(export_result)
+    assert (baseline_dir / "manifest.json").is_file()
+
+    compat_result = run_subprocess(
+        [
+            str(contracts_compat),
+            "--baseline",
+            str(baseline_dir),
+            "--current",
+            "HEAD",
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(compat_result)
 
 
 def test_package_discovery_configuration_includes_contracts_tree() -> None:
