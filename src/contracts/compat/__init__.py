@@ -1,2 +1,1 @@
-"""Schema compatibility check entry points."""
-
+"""Schema 兼容性检查 CLI 与库入口的占位子包。"""
