@@ -27,6 +27,7 @@ src/project_ult_contracts.egg-info/top_level.txt
 tests/test_alpha_analyzer_protocol.py
 tests/test_compat_cli.py
 tests/test_compat_rules.py
+tests/test_contract_fixtures.py
 tests/test_core_types.py
 tests/test_cycle_metadata.py
 tests/test_data_source_adapter_protocol.py
