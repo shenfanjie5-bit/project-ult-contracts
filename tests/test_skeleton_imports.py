@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import importlib
 import pathlib
+import subprocess
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -14,6 +15,26 @@ import pytest
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
 CONTRACTS_DIR = SRC_DIR / "contracts"
+EXPECTED_RUNTIME_SOURCE_FILES = {
+    "src/contracts/__init__.py",
+    "src/contracts/compat/__init__.py",
+    "src/contracts/compat/__main__.py",
+    "src/contracts/core/__init__.py",
+    "src/contracts/core/base.py",
+    "src/contracts/core/types.py",
+    "src/contracts/core/version.py",
+    "src/contracts/errors.py",
+    "src/contracts/export/__init__.py",
+    "src/contracts/export/__main__.py",
+    "src/contracts/protocols/__init__.py",
+    "src/contracts/protocols/alpha_analyzer.py",
+    "src/contracts/protocols/data_source_adapter.py",
+    "src/contracts/schemas/__init__.py",
+    "src/contracts/schemas/alpha.py",
+    "src/contracts/schemas/cycle.py",
+    "src/contracts/schemas/ex_payloads.py",
+    "src/contracts/schemas/formal_objects.py",
+}
 BUSINESS_IMPORT_ROOTS = {
     "data_platform",
     "main_core",
@@ -31,6 +52,41 @@ def prepend_src_path() -> Iterator[None]:
         yield
     finally:
         sys.path.remove(str(SRC_DIR))
+
+
+def test_milestone_source_tree_contains_real_python_sources() -> None:
+    source_paths = {
+        str(path.relative_to(PROJECT_ROOT))
+        for path in CONTRACTS_DIR.rglob("*.py")
+    }
+    test_paths = {
+        str(path.relative_to(PROJECT_ROOT))
+        for path in (PROJECT_ROOT / "tests").glob("test_*.py")
+    }
+
+    assert EXPECTED_RUNTIME_SOURCE_FILES <= source_paths
+    assert test_paths
+
+
+def test_no_tracked_python_bytecode_artifacts() -> None:
+    if not (PROJECT_ROOT / ".git").exists():
+        pytest.skip("git metadata is required to inspect tracked artifacts")
+
+    result = subprocess.run(
+        ["git", "ls-files"],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+    tracked_artifacts = [
+        path
+        for path in result.stdout.splitlines()
+        if "__pycache__/" in path or path.endswith((".pyc", ".pyo"))
+    ]
+    assert not tracked_artifacts
 
 
 def test_package_imports() -> None:
