@@ -78,6 +78,7 @@ def test_contract_package_skeleton_is_importable() -> None:
             for module_name in [
                 "contracts",
                 "contracts.core",
+                "contracts.errors",
                 "contracts.protocols",
                 "contracts.schemas",
                 "contracts.export",
@@ -90,6 +91,7 @@ def test_contract_package_skeleton_is_importable() -> None:
     assert [module.__name__ for module in imported_modules] == [
         "contracts",
         "contracts.core",
+        "contracts.errors",
         "contracts.protocols",
         "contracts.schemas",
         "contracts.export",
@@ -104,7 +106,13 @@ def test_contract_root_exports_public_skeleton_modules() -> None:
     finally:
         sys.path.remove(str(SRC_DIR))
 
-    assert contracts.__all__ == ["core", "protocols", "schemas", "__version__"]
+    assert contracts.__all__ == [
+        "core",
+        "errors",
+        "protocols",
+        "schemas",
+        "__version__",
+    ]
     assert isinstance(contracts.__version__, str)
     assert contracts.__version__
 
