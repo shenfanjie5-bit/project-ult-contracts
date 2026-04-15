@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-04-15T12:00:00Z",
+  "object_name": "report",
+  "payload": {
+    "title": "Daily Report"
+  },
+  "version": "0.1.0",
+  "zone": "formal"
+}

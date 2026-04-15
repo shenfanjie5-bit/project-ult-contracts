@@ -1,0 +1,265 @@
+{
+  "fixtures": [
+    {
+      "case": "minimal-valid-ex0-metadata",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.ex_payloads.Ex0Metadata",
+      "path": "fixtures/valid/ex_payloads/ex0_metadata.json",
+      "schema_name": "ex0_metadata",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-ex1-candidate-fact",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.ex_payloads.Ex1CandidateFact",
+      "path": "fixtures/valid/ex_payloads/ex1_candidate_fact.json",
+      "schema_name": "ex1_candidate_fact",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-ex2-candidate-signal",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.ex_payloads.Ex2CandidateSignal",
+      "path": "fixtures/valid/ex_payloads/ex2_candidate_signal.json",
+      "schema_name": "ex2_candidate_signal",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-ex3-candidate-graph-delta",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.ex_payloads.Ex3CandidateGraphDelta",
+      "path": "fixtures/valid/ex_payloads/ex3_candidate_graph_delta.json",
+      "schema_name": "ex3_candidate_graph_delta",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-cycle-metadata",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.cycle.CycleMetadata",
+      "path": "fixtures/valid/cycle/cycle_metadata.json",
+      "schema_name": "cycle_metadata",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-world-state-snapshot",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.WorldStateSnapshot",
+      "path": "fixtures/valid/formal_objects/world_state_snapshot.json",
+      "schema_name": "world_state_snapshot",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-official-alpha-pool",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.OfficialAlphaPool",
+      "path": "fixtures/valid/formal_objects/official_alpha_pool.json",
+      "schema_name": "official_alpha_pool",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-alpha-result-snapshot",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.AlphaResultSnapshot",
+      "path": "fixtures/valid/formal_objects/alpha_result_snapshot.json",
+      "schema_name": "alpha_result_snapshot",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-recommendation-snapshot",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.RecommendationSnapshot",
+      "path": "fixtures/valid/formal_objects/recommendation_snapshot.json",
+      "schema_name": "recommendation_snapshot",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-dashboard-snapshot",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.DashboardSnapshot",
+      "path": "fixtures/valid/formal_objects/dashboard_snapshot.json",
+      "schema_name": "dashboard_snapshot",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-report",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.Report",
+      "path": "fixtures/valid/formal_objects/report.json",
+      "schema_name": "report",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-audit-record",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.AuditRecord",
+      "path": "fixtures/valid/formal_objects/audit_record.json",
+      "schema_name": "audit_record",
+      "valid": true
+    },
+    {
+      "case": "minimal-valid-replay-record",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "model": "contracts.schemas.formal_objects.ReplayRecord",
+      "path": "fixtures/valid/formal_objects/replay_record.json",
+      "schema_name": "replay_record",
+      "valid": true
+    },
+    {
+      "case": "forbidden-ingest-metadata-ex0",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.ex_payloads.Ex0Metadata",
+      "path": "fixtures/invalid/ex_payloads/ex0_metadata_forbidden_ingest_metadata.json",
+      "schema_name": "ex0_metadata",
+      "valid": false
+    },
+    {
+      "case": "missing-required-confidence-ex1",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.ex_payloads.Ex1CandidateFact",
+      "path": "fixtures/invalid/ex_payloads/ex1_candidate_fact_missing_confidence.json",
+      "schema_name": "ex1_candidate_fact",
+      "valid": false
+    },
+    {
+      "case": "forbidden-ingest-metadata-ex2",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.ex_payloads.Ex2CandidateSignal",
+      "path": "fixtures/invalid/ex_payloads/ex2_candidate_signal_forbidden_ingest_metadata.json",
+      "schema_name": "ex2_candidate_signal",
+      "valid": false
+    },
+    {
+      "case": "missing-required-evidence-ex3",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.ex_payloads.Ex3CandidateGraphDelta",
+      "path": "fixtures/invalid/ex_payloads/ex3_candidate_graph_delta_missing_evidence.json",
+      "schema_name": "ex3_candidate_graph_delta",
+      "valid": false
+    },
+    {
+      "case": "ended-at-before-started-at-cycle",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.cycle.CycleMetadata",
+      "path": "fixtures/invalid/cycle/cycle_metadata_ended_before_started.json",
+      "schema_name": "cycle_metadata",
+      "valid": false
+    },
+    {
+      "case": "missing-required-object-id-formal-object",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.formal_objects.Report",
+      "path": "fixtures/invalid/formal_objects/report_missing_object_id.json",
+      "schema_name": "report",
+      "valid": false
+    },
+    {
+      "case": "wrong-zone-formal-object",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "ValidationError",
+      "model": "contracts.schemas.formal_objects.Report",
+      "path": "fixtures/invalid/formal_objects/report_wrong_zone.json",
+      "schema_name": "report",
+      "valid": false
+    },
+    {
+      "case": "unknown-formal-object-backtest-result",
+      "consumer": [
+        "data-platform",
+        "subsystem-sdk",
+        "main-core"
+      ],
+      "expected_error": "UNKNOWN_FORMAL_OBJECT",
+      "model": "contracts.schemas.formal_objects.FormalObjectBase",
+      "path": "fixtures/invalid/formal_objects/unknown_backtest_result.json",
+      "schema_name": "formal_object_base",
+      "valid": false
+    }
+  ],
+  "version": "0.1.0"
+}

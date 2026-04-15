@@ -1,0 +1,13 @@
+{
+  "entity_id": "AAPL",
+  "extracted_at": "2026-04-15T12:00:00Z",
+  "fact_content": {
+    "headline": "sample"
+  },
+  "fact_id": "fact-1",
+  "fact_type": "earnings",
+  "source_reference": {
+    "source": "fixture"
+  },
+  "subsystem_id": "subsystem-news"
+}
