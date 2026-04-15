@@ -1,16 +1,24 @@
 from __future__ import annotations
 
 import pathlib
+import re
 
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = PROJECT_ROOT / "README.md"
 MODULE_SPEC = PROJECT_ROOT / "docs" / "MODULE_SPEC.md"
+PROGRESS = PROJECT_ROOT / "docs" / "PROGRESS.md"
 TESTPLAN = PROJECT_ROOT / "docs" / "TESTPLAN.md"
 
 
 def read_text(path: pathlib.Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def section_between(text: str, start_heading: str, end_heading: str) -> str:
+    start = text.index(start_heading)
+    end = text.index(end_heading, start)
+    return text[start:end]
 
 
 def test_stage_zero_docs_start_with_required_metadata() -> None:
@@ -85,3 +93,45 @@ def test_required_docs_exist() -> None:
         "MODULE_SPEC.md",
         "TESTPLAN.md",
     }.issubset(docs)
+
+
+def test_progress_marks_completed_stage_zero_without_ambiguous_issue_ids() -> None:
+    progress = read_text(PROGRESS)
+    stage_zero = section_between(
+        progress,
+        "## 阶段 0：合同骨架（milestone-0）",
+        "## 阶段 1：核心合同冻结（milestone-1）",
+    )
+
+    assert "| 阶段 0 | milestone-0 · 合同骨架 |" in progress
+    assert (
+        "| 阶段 0 | milestone-0 · 合同骨架 | "
+        "建立包骨架、版本号、文档、冒烟测试 | 5 | 已完成 |"
+    ) in progress
+    assert "**总体状态**：已完成" in stage_zero
+    assert "#ISSUE-" not in progress
+
+    github_issue_numbers = range(2, 7)
+    for issue_offset, github_issue_number in enumerate(github_issue_numbers, start=1):
+        row_pattern = (
+            rf"\| ISSUE-{issue_offset:03d} \| GH #{github_issue_number} \| "
+            r".+ \| P0 \| .+ \| 已完成 \|"
+        )
+        assert re.search(row_pattern, stage_zero)
+
+    for acceptance_item in [
+        "全部 5 个 issue 通过各自验收标准",
+        '`python -c "import contracts"` 成功',
+        "`bash scripts/ci.sh` 入口存在",
+        "README / MODULE_SPEC / TESTPLAN 三份文档就绪",
+    ]:
+        assert f"- [x] {acceptance_item}" in stage_zero
+
+    ci_script = PROJECT_ROOT / "scripts" / "ci.sh"
+    ci_script_text = read_text(ci_script)
+    assert ci_script.is_file()
+    assert "pip install -e .[dev]" in ci_script_text
+    assert "pytest -q" in ci_script_text
+    assert README.is_file()
+    assert MODULE_SPEC.is_file()
+    assert TESTPLAN.is_file()
