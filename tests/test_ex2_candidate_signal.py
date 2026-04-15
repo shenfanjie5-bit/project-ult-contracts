@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import pathlib
 import sys
 from datetime import datetime, timezone
@@ -103,6 +104,22 @@ def test_ex2_candidate_signal_rejects_negative_magnitude() -> None:
 
     with pytest.raises(pydantic.ValidationError):
         schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+def test_ex2_candidate_signal_rejects_non_finite_magnitude() -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "magnitude": float("inf")}
+
+    with pytest.raises(pydantic.ValidationError, match="magnitude must be finite"):
+        schemas.Ex2CandidateSignal.model_validate(payload)
+
+
+def test_ex2_candidate_signal_rejects_non_finite_json_magnitude() -> None:
+    schemas = import_schemas()
+    payload = {**valid_payload(), "magnitude": float("inf")}
+
+    with pytest.raises(pydantic.ValidationError, match="magnitude must be finite"):
+        schemas.Ex2CandidateSignal.model_validate_json(json.dumps(payload))
 
 
 @pytest.mark.parametrize("confidence", [-0.01, 1.01])

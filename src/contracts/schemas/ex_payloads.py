@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from math import isfinite
 from typing import Annotated, TypeAlias
 
 from pydantic import (
@@ -147,6 +148,16 @@ class Ex2CandidateSignal(BaseExPayload):
     time_horizon: str = Field(min_length=1)
     evidence: list[EvidenceRef] = Field(min_length=1)
     confidence: Confidence
+
+    @field_validator("magnitude")
+    @classmethod
+    def validate_magnitude_is_finite(cls, magnitude: float) -> float:
+        """Reject non-finite magnitudes before serialization can corrupt them."""
+
+        if not isfinite(magnitude):
+            raise ValueError("magnitude must be finite")
+
+        return magnitude
 
 
 __all__ = [
