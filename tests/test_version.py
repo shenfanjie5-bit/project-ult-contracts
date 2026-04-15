@@ -46,6 +46,17 @@ def test_contract_version_entry_released_at_must_be_valid_datetime(
         core.ContractVersionEntry(version="0.2.0", released_at="not-a-date")
 
 
+@pytest.mark.parametrize("version", ["", "not-a-version", "0.1", "0.1.0-dev"])
+def test_contract_version_entry_version_must_be_semantic(
+    contracts_modules: tuple[object, object],
+    version: str,
+) -> None:
+    _, core = contracts_modules
+
+    with pytest.raises(pydantic.ValidationError):
+        core.ContractVersionEntry(version=version, released_at="2026-04-15T00:00:00Z")
+
+
 def test_contract_version_entry_released_at_must_be_timezone_aware(
     contracts_modules: tuple[object, object],
 ) -> None:

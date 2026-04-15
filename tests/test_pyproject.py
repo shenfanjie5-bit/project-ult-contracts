@@ -167,3 +167,14 @@ def test_no_disallowed_schema_maintenance_dependencies() -> None:
     assert dependency_text.count("pydantic") == 1
     assert "avro" not in dependency_text.lower()
     assert "jsonschema-manual" not in dependency_text.lower()
+
+
+def test_ci_script_is_executable_and_runs_stage_zero_checks() -> None:
+    ci_script = PROJECT_ROOT / "scripts" / "ci.sh"
+    script = ci_script.read_text(encoding="utf-8")
+
+    assert os.access(ci_script, os.X_OK)
+    assert "set -euo pipefail" in script
+    assert "-m pip install -e '.[dev]'" in script
+    assert "PYTHONPATH" in script
+    assert "-m pytest -q" in script
