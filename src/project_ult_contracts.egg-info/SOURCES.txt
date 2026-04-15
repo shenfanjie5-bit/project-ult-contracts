@@ -37,6 +37,7 @@ tests/test_ex3_candidate_graph_delta.py
 tests/test_ex_payloads.py
 tests/test_formal_objects.py
 tests/test_formal_objects_and_cycle.py
+tests/test_milestone1_review_guardrails.py
 tests/test_protocols.py
 tests/test_pyproject.py
 tests/test_skeleton_imports.py
