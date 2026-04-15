@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import pathlib
+import sys
 import tomllib
+from collections.abc import Callable
+from importlib.metadata import EntryPoint
+
+
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
 
 
 def load_pyproject() -> dict:
-    return tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
+    return tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+
+def load_console_script(name: str, entry_point: str) -> Callable[[], int]:
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        function = EntryPoint(name=name, value=entry_point, group="console_scripts").load()
+    finally:
+        sys.path.remove(str(SRC_DIR))
+
+    assert callable(function)
+    return function
 
 
 def test_project_runtime_dependencies_match_contract_requirements() -> None:
@@ -35,6 +53,15 @@ def test_console_scripts_point_to_export_and_compat_stubs() -> None:
         "contracts-export": "contracts.export.__main__:main",
         "contracts-compat": "contracts.compat.__main__:main",
     }
+
+
+def test_console_script_entry_points_are_importable_and_invokable() -> None:
+    scripts = load_pyproject()["project"]["scripts"]
+
+    for name, entry_point in scripts.items():
+        main = load_console_script(name, entry_point)
+
+        assert main() == 0
 
 
 def test_no_disallowed_schema_maintenance_dependencies() -> None:
