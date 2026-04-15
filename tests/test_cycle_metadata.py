@@ -97,6 +97,42 @@ def test_ended_at_before_started_at_is_rejected() -> None:
 
 
 @pytest.mark.parametrize(
+    ("field_name", "invalid_value"),
+    [
+        (
+            "started_at",
+            datetime(2026, 4, 15, 10, 0, tzinfo=timezone.utc),
+        ),
+        (
+            "ended_at",
+            datetime(2026, 4, 15, 8, 59, 59, tzinfo=timezone.utc),
+        ),
+    ],
+)
+def test_failed_cycle_time_assignment_leaves_original_values_unchanged(
+    field_name: str,
+    invalid_value: datetime,
+) -> None:
+    CycleMetadata, _ = import_cycle_schema()
+    started_at = datetime(2026, 4, 15, 9, 0, tzinfo=timezone.utc)
+    ended_at = started_at + timedelta(minutes=30)
+    cycle = CycleMetadata.model_validate(
+        {
+            **valid_cycle_payload(),
+            "phase": "completed",
+            "started_at": started_at,
+            "ended_at": ended_at,
+        },
+    )
+
+    with pytest.raises(pydantic.ValidationError):
+        setattr(cycle, field_name, invalid_value)
+
+    assert cycle.started_at == started_at
+    assert cycle.ended_at == ended_at
+
+
+@pytest.mark.parametrize(
     "field_name",
     [
         "started_at",
