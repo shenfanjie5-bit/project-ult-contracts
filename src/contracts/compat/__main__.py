@@ -1,9 +1,9 @@
-"""Placeholder CLI for contract compatibility checks."""
+"""Schema 兼容性检查 CLI 占位入口。"""
 
 
 def main() -> int:
-    """Run the compat CLI placeholder."""
-    return 0
+    """运行兼容性检查 CLI 占位入口。"""
+    raise NotImplementedError("实现见阶段 2")
 
 
 if __name__ == "__main__":

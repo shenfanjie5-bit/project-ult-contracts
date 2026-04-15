@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import importlib
+import os
 import pathlib
+import subprocess
 import sys
 import tomllib
 from collections.abc import Callable
 from importlib.metadata import EntryPoint
+
+import pytest
 
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -61,7 +66,94 @@ def test_console_script_entry_points_are_importable_and_invokable() -> None:
     for name, entry_point in scripts.items():
         main = load_console_script(name, entry_point)
 
-        assert main() == 0
+        with pytest.raises(NotImplementedError, match="实现见阶段 2"):
+            main()
+
+
+def test_contract_package_skeleton_is_importable() -> None:
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        imported_modules = [
+            importlib.import_module(module_name)
+            for module_name in [
+                "contracts",
+                "contracts.core",
+                "contracts.protocols",
+                "contracts.schemas",
+                "contracts.export",
+                "contracts.compat",
+            ]
+        ]
+    finally:
+        sys.path.remove(str(SRC_DIR))
+
+    assert [module.__name__ for module in imported_modules] == [
+        "contracts",
+        "contracts.core",
+        "contracts.protocols",
+        "contracts.schemas",
+        "contracts.export",
+        "contracts.compat",
+    ]
+
+
+def test_contract_root_exports_public_skeleton_modules() -> None:
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        contracts = importlib.import_module("contracts")
+    finally:
+        sys.path.remove(str(SRC_DIR))
+
+    assert contracts.__all__ == ["core", "protocols", "schemas", "__version__"]
+    assert isinstance(contracts.__version__, str)
+    assert contracts.__version__
+
+
+@pytest.mark.parametrize("module_name", ["contracts.export", "contracts.compat"])
+def test_placeholder_cli_modules_raise_not_implemented(module_name: str) -> None:
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(SRC_DIR)
+
+    result = subprocess.run(
+        [sys.executable, "-m", module_name],
+        cwd=PROJECT_ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "NotImplementedError" in result.stderr
+    assert "实现见阶段 2" in result.stderr
+
+
+def test_contract_init_modules_have_chinese_docstrings() -> None:
+    init_paths = [
+        SRC_DIR / "contracts" / "__init__.py",
+        SRC_DIR / "contracts" / "core" / "__init__.py",
+        SRC_DIR / "contracts" / "protocols" / "__init__.py",
+        SRC_DIR / "contracts" / "schemas" / "__init__.py",
+        SRC_DIR / "contracts" / "export" / "__init__.py",
+        SRC_DIR / "contracts" / "compat" / "__init__.py",
+    ]
+
+    for init_path in init_paths:
+        module = compile(init_path.read_text(encoding="utf-8"), str(init_path), "exec")
+        docstring = module.co_consts[0]
+
+        assert isinstance(docstring, str)
+        assert any("\u4e00" <= character <= "\u9fff" for character in docstring)
+
+
+def test_no_undefined_top_level_contract_files() -> None:
+    disallowed_files = [
+        SRC_DIR / "contracts" / "legacy.py",
+        SRC_DIR / "contracts" / "utils.py",
+    ]
+
+    for disallowed_file in disallowed_files:
+        assert not disallowed_file.exists()
 
 
 def test_no_disallowed_schema_maintenance_dependencies() -> None:
