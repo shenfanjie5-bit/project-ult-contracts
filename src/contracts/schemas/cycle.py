@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Self
 
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 
 from contracts.core import (
     ContractBaseModel,
@@ -28,6 +28,8 @@ class CyclePhase(str, Enum):
 
 class CycleMetadata(ContractBaseModel):
     """Minimal cycle control metadata shared by orchestrator consumers."""
+
+    model_config = ConfigDict(frozen=True)
 
     cycle_id: CycleId
     phase: CyclePhase

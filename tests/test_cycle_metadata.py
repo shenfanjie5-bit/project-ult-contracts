@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib
 import pathlib
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pydantic
 import pytest
@@ -147,3 +147,25 @@ def test_cycle_metadata_rejects_empty_previous_cycle_id() -> None:
 
     with pytest.raises(pydantic.ValidationError):
         schemas.CycleMetadata.model_validate(payload)
+
+
+def test_cycle_metadata_rejected_assignment_leaves_state_unchanged() -> None:
+    schemas = import_schemas()
+    started_at = datetime(2026, 4, 15, 12, 0, tzinfo=timezone.utc)
+    ended_at = started_at + timedelta(minutes=30)
+    cycle = schemas.CycleMetadata.model_validate(
+        {
+            **valid_payload(),
+            "started_at": started_at,
+            "ended_at": ended_at,
+        }
+    )
+    original_state = cycle.model_dump()
+
+    with pytest.raises(pydantic.ValidationError):
+        cycle.started_at = ended_at + timedelta(seconds=1)
+    assert cycle.model_dump() == original_state
+
+    with pytest.raises(pydantic.ValidationError):
+        cycle.ended_at = started_at - timedelta(seconds=1)
+    assert cycle.model_dump() == original_state

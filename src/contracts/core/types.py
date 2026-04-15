@@ -59,8 +59,14 @@ DeltaId: TypeAlias = NonEmptyString
 NodeId: TypeAlias = NonEmptyString
 EvidenceRef: TypeAlias = NonEmptyString
 VersionString: TypeAlias = NonEmptyString
-Confidence: TypeAlias = Annotated[float, Field(ge=0.0, le=1.0)]
-Magnitude: TypeAlias = Annotated[float, Field(ge=0.0)]
+Confidence: TypeAlias = Annotated[
+    float,
+    Field(strict=True, ge=0.0, le=1.0, allow_inf_nan=False),
+]
+Magnitude: TypeAlias = Annotated[
+    float,
+    Field(strict=True, ge=0.0, allow_inf_nan=False),
+]
 
 
 __all__ = [
