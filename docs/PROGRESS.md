@@ -48,21 +48,21 @@
 **前置依赖**：阶段 0（已完成）
 **总体状态**：进行中
 
-| Issue | 标题 | 优先级 | 依赖 | 状态 |
-|-------|------|--------|------|------|
-| ISSUE-006 | 共享枚举与类型基元（GH #7） | P0 | ISSUE-005 | 已完成 |
-| ISSUE-007 | 错误码注册表 contracts.errors（GH #8） | P0 | ISSUE-006 | 已完成 |
-| ISSUE-008 | Ex-0 Metadata / 心跳 schema（GH #9） | P0 | ISSUE-006, ISSUE-007 | 已完成 |
-| ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
-| ISSUE-010 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
-| ISSUE-011 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
-| ISSUE-012 | Formal objects schema 族（GH #13） | P0 | ISSUE-006, ISSUE-007 | 已完成 |
-| ISSUE-013 | Cycle 元数据对象 | P0 | ISSUE-006 | 未开始 |
-| ISSUE-014 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
-| ISSUE-015 | AlphaAnalyzer 协议与 alpha_result 冻结（GH #16） | P0 | ISSUE-012 | 已完成 |
-| ISSUE-016 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
-| ISSUE-017 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 未开始 |
-| ISSUE-018 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
+| 内部 Issue | GitHub Issue | 标题 | 优先级 | 依赖 | 状态 |
+|------------|--------------|------|--------|------|------|
+| ISSUE-006 | GH #7 | 共享枚举与类型基元 | P0 | ISSUE-005 | 已完成 |
+| ISSUE-007 | GH #8 | 错误码注册表 contracts.errors | P0 | ISSUE-006 | 已完成 |
+| ISSUE-008 | GH #9 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 已完成 |
+| ISSUE-009 | GH #10 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
+| ISSUE-010 | GH #11 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
+| ISSUE-011 | GH #12 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
+| ISSUE-012 | GH #13 | Formal objects schema 族 | P0 | ISSUE-006, ISSUE-007 | 已完成 |
+| ISSUE-013 | GH #14 | Cycle 元数据对象 | P0 | ISSUE-006 | 已完成 |
+| ISSUE-014 | GH #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
+| ISSUE-015 | GH #16 | AlphaAnalyzer 协议与 alpha_result 冻结 | P0 | ISSUE-012 | 已完成 |
+| ISSUE-016 | GH #17 | Ex-0~Ex-3 Pydantic 校验单元测试 | P0 | ISSUE-008–ISSUE-011 | 未开始 |
+| ISSUE-017 | GH #18 | Formal objects 与 cycle 元数据单元测试 | P0 | ISSUE-012, ISSUE-013 | 未开始 |
+| ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
 
 阶段 1 验收：
 - [ ] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
@@ -91,6 +91,10 @@
 - [x] GH #9 / ISSUE-008：`PYTHONPATH=src python3 -m pytest -q tests/test_ex0_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #9 / ISSUE-008：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #9 / ISSUE-008：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation
+- [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `cycle ok`
+- [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 -m pytest -q tests/test_cycle_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GH #14 / ISSUE-013：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GH #14 / ISSUE-013：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 
 ---
 
@@ -130,6 +134,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #14 / ISSUE-013 Cycle 元数据对象，记录沙箱验证结果 | GH #14 |
 | 2026-04-15 | 完成 GH #9 / ISSUE-008 Ex-0 Metadata / 心跳 schema，记录沙箱验证结果 | GH #9 |
 | 2026-04-15 | 完成 GH #16 / ISSUE-015 AlphaAnalyzer 协议与 `alpha_result` 字段冻结，记录沙箱验证结果 | GH #16 |
 | 2026-04-15 | 完成 GH #13 / ISSUE-012 Formal objects schema 族，记录沙箱验证结果 | GH #13 |

@@ -1,6 +1,7 @@
 """Ex-0 到 Ex-3、formal objects 与 cycle 对象 Schema 子包。"""
 
 from contracts.schemas.alpha import AlphaResult
+from contracts.schemas.cycle import CycleMetadata, CyclePhase
 from contracts.schemas.ex_payloads import (
     FORBIDDEN_INGEST_METADATA_FIELDS,
     BaseExPayload,
@@ -24,6 +25,8 @@ from contracts.schemas.formal_objects import (
 
 __all__ = [
     "AlphaResult",
+    "CyclePhase",
+    "CycleMetadata",
     "FORBIDDEN_INGEST_METADATA_FIELDS",
     "BaseExPayload",
     "Ex0Metadata",
