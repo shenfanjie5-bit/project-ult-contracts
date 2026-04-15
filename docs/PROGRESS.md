@@ -55,7 +55,7 @@
 | ISSUE-008 | GH #9 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-009 | GH #10 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 已完成 |
 | ISSUE-010 | GH #11 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 已完成 |
-| ISSUE-011 | GH #12 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 未开始 |
+| ISSUE-011 | GitHub #12 | Ex-3 Candidate Graph Deltas schema | P0 | ISSUE-010 | 已完成 |
 | ISSUE-012 | GH #13 | Formal objects schema 族 | P0 | ISSUE-006, ISSUE-007 | 已完成 |
 | ISSUE-013 | GH #14 | Cycle 元数据对象 | P0 | ISSUE-006 | 已完成 |
 | ISSUE-014 | GH #15 | DataSourceAdapter 协议 | P0 | ISSUE-013 | 未开始 |
@@ -65,10 +65,10 @@
 | ISSUE-018 | GH #19 | 协议对象结构测试 | P0 | ISSUE-014, ISSUE-015 | 未开始 |
 
 阶段 1 验收：
-- [ ] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
+- [x] Ex-0~Ex-3、formal objects、cycle 元数据全部有正式 Pydantic 定义（§23.1）
 - [ ] `data-platform`、`main-core`、`subsystem-sdk` 可直接 import 并通过最小 contract test（§23.2）
 - [x] `backtest_result` 未被注册为 formal object（§16.3 / §6.2）
-- [ ] `submitted_at` / `ingest_seq` 未出现在任何 Ex payload 中（§5.4）
+- [x] `submitted_at` / `ingest_seq` 未出现在任何 Ex payload 中（§5.4）
 
 阶段 1 当前验收证据：
 - [x] GH #7 / ISSUE-006：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `core types ok`
@@ -100,6 +100,11 @@
 - [x] GH #11 / ISSUE-010：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
 - [ ] GH #11 / ISSUE-010：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
 - [ ] GH #11 / ISSUE-010：`pytest -q tests/test_ex2_candidate_signal.py tests/test_ex1_candidate_fact.py tests/test_skeleton_imports.py` 在当前环境返回 `command not found`；已使用 `python3 -m pytest` 等价验证
+- [x] GitHub #12 / ISSUE-011：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `ex3 ok`
+- [x] GitHub #12 / ISSUE-011：`PYTHONPATH=src python3 -m pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
+- [x] GitHub #12 / ISSUE-011：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
+- [ ] GitHub #12 / ISSUE-011：`python -m pip install -e .[dev]` 未执行；当前沙箱禁止全局 package installation，且当前环境无 `python` 命令
+- [ ] GitHub #12 / ISSUE-011：`pytest -q tests/test_ex3_candidate_graph_delta.py tests/test_ex2_candidate_signal.py tests/test_skeleton_imports.py` 未执行；当前环境无 `pytest` 命令，已使用 `python3 -m pytest` 等价验证
 - [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `cycle ok`
 - [x] GH #14 / ISSUE-013：`PYTHONPATH=src python3 -m pytest -q tests/test_cycle_metadata.py tests/test_skeleton_imports.py` 退出码 0；当前环境未安装 console scripts，既有 entrypoint 检查按测试逻辑 skip
 - [x] GH #14 / ISSUE-013：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径
@@ -148,6 +153,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GitHub #12 / ISSUE-011 Ex-3 Candidate Graph Deltas schema，记录沙箱验证结果 | GitHub #12 |
 | 2026-04-15 | 完成 GH #11 / ISSUE-010 Ex-2 Candidate Signals schema，记录沙箱验证结果 | GH #11 |
 | 2026-04-15 | 完成 GH #18 / ISSUE-017 Formal objects 与 cycle 元数据单元测试，记录沙箱验证结果 | GH #18 |
 | 2026-04-15 | 完成 GH #10 / ISSUE-009 Ex-1 Candidate Facts schema，记录沙箱验证结果 | GH #10 |

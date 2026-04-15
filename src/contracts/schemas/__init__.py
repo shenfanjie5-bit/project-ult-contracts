@@ -8,6 +8,7 @@ from contracts.schemas.ex_payloads import (
     Ex0Metadata,
     Ex1CandidateFact,
     Ex2CandidateSignal,
+    Ex3CandidateGraphDelta,
 )
 from contracts.schemas.formal_objects import (
     FORMAL_OBJECT_NAMES,
@@ -34,6 +35,7 @@ __all__ = [
     "Ex0Metadata",
     "Ex1CandidateFact",
     "Ex2CandidateSignal",
+    "Ex3CandidateGraphDelta",
     "FormalObjectName",
     "FormalObjectBase",
     "WorldStateSnapshot",
