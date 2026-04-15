@@ -1,11 +1,13 @@
 """契约版本常量与持久层版本记录对象。"""
 
+import re
 from datetime import datetime, timezone
 
 from pydantic import BaseModel, field_validator
 
 
 __version__: str = "0.1.0"
+VERSION_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
 class ContractVersionEntry(BaseModel):
@@ -15,6 +17,14 @@ class ContractVersionEntry(BaseModel):
     released_at: datetime
     compatibility_note: str = ""
     breaking: bool = False
+
+    @field_validator("version")
+    @classmethod
+    def version_must_be_semantic(cls, value: str) -> str:
+        """确保版本号为三段式语义版本。"""
+        if not VERSION_PATTERN.fullmatch(value):
+            raise ValueError("version must use MAJOR.MINOR.PATCH format")
+        return value
 
     @field_validator("released_at")
     @classmethod
@@ -33,4 +43,9 @@ CURRENT_VERSION_ENTRY: ContractVersionEntry = ContractVersionEntry(
 )
 
 
-__all__ = ["__version__", "ContractVersionEntry", "CURRENT_VERSION_ENTRY"]
+__all__ = [
+    "__version__",
+    "VERSION_PATTERN",
+    "ContractVersionEntry",
+    "CURRENT_VERSION_ENTRY",
+]
