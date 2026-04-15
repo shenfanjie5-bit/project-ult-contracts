@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${PROJECT_ROOT}"
+
 PYTHON_BIN="${PYTHON:-python3}"
 CONTRACTS_VERSION="${CONTRACTS_VERSION:-0.1.0}"
 CONTRACTS_BASELINE="${CONTRACTS_BASELINE:-artifacts/baselines/0.1.0/json_schema}"
