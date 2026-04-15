@@ -58,6 +58,18 @@ def test_console_scripts_point_to_export_and_compat_entrypoints() -> None:
     }
 
 
+def test_packaging_metadata_does_not_use_scaffold_defaults() -> None:
+    pyproject = load_pyproject()
+
+    assert pyproject["project"]["requires-python"] != ">=3.11"
+    assert pyproject["project"]["dependencies"]
+    assert pyproject["tool"]["setuptools"].get("packages") != []
+    assert set(pyproject["project"]["scripts"]) == {
+        "contracts-export",
+        "contracts-compat",
+    }
+
+
 def test_console_script_entry_points_are_importable_and_invokable(
     tmp_path: pathlib.Path,
 ) -> None:
