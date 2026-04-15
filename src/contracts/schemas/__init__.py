@@ -6,6 +6,7 @@ from contracts.schemas.ex_payloads import (
     FORBIDDEN_INGEST_METADATA_FIELDS,
     BaseExPayload,
     Ex0Metadata,
+    Ex1CandidateFact,
 )
 from contracts.schemas.formal_objects import (
     FORMAL_OBJECT_NAMES,
@@ -30,6 +31,7 @@ __all__ = [
     "FORBIDDEN_INGEST_METADATA_FIELDS",
     "BaseExPayload",
     "Ex0Metadata",
+    "Ex1CandidateFact",
     "FormalObjectName",
     "FormalObjectBase",
     "WorldStateSnapshot",
