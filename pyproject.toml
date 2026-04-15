@@ -19,9 +19,7 @@ contracts-compat = "contracts.compat.__main__:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
+packages = {find = {where = ["src"]}}
 
 [tool.pytest.ini_options]
 addopts = "-q"

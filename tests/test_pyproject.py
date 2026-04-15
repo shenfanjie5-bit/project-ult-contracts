@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
+import sysconfig
 import tomllib
 from collections.abc import Callable
 from importlib.metadata import EntryPoint
@@ -12,6 +15,16 @@ from importlib.metadata import EntryPoint
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
+
+
+def venv_executable(venv_dir: pathlib.Path, executable_name: str) -> pathlib.Path:
+    bin_dir = "Scripts" if os.name == "nt" else "bin"
+    suffix = (
+        ".exe"
+        if os.name == "nt" and not executable_name.endswith(".exe")
+        else ""
+    )
+    return venv_dir / bin_dir / f"{executable_name}{suffix}"
 
 
 def load_pyproject() -> dict:
@@ -27,6 +40,61 @@ def load_console_script(name: str, entry_point: str) -> Callable[..., int]:
 
     assert callable(function)
     return function
+
+
+def run_subprocess(
+    args: list[str],
+    *,
+    cwd: pathlib.Path,
+    env: dict[str, str],
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args,
+        cwd=cwd,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def assert_success(result: subprocess.CompletedProcess[str]) -> None:
+    assert result.returncode == 0, (
+        f"command failed: {' '.join(result.args)}\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
+
+
+def local_build_requirement_wheel_dirs() -> list[pathlib.Path]:
+    stdlib_dir = pathlib.Path(sysconfig.get_path("stdlib"))
+    base_prefix = pathlib.Path(sys.base_prefix)
+    candidate_dirs = [
+        stdlib_dir / "ensurepip" / "_bundled",
+        stdlib_dir / "test" / "wheeldata",
+    ]
+    candidate_dirs.extend(
+        parent / "libexec" for parent in [base_prefix, *base_prefix.parents]
+    )
+
+    package_dirs: dict[str, pathlib.Path] = {}
+    for candidate_dir in candidate_dirs:
+        if not candidate_dir.is_dir():
+            continue
+        setuptools_wheels = sorted(candidate_dir.glob("setuptools-*.whl"))
+        if any(is_setuptools_69_or_newer(wheel) for wheel in setuptools_wheels):
+            package_dirs.setdefault("setuptools", candidate_dir)
+        if any(candidate_dir.glob("wheel-*.whl")):
+            package_dirs.setdefault("wheel", candidate_dir)
+
+    if {"setuptools", "wheel"} <= package_dirs.keys():
+        return sorted(set(package_dirs.values()))
+    return []
+
+
+def is_setuptools_69_or_newer(wheel_path: pathlib.Path) -> bool:
+    match = re.match(r"setuptools-(\d+)", wheel_path.name)
+    return bool(match and int(match.group(1)) >= 69)
 
 
 def test_project_runtime_dependencies_match_contract_requirements() -> None:
@@ -55,6 +123,18 @@ def test_console_scripts_point_to_export_and_compat_entrypoints() -> None:
     assert scripts == {
         "contracts-export": "contracts.export.__main__:main",
         "contracts-compat": "contracts.compat.__main__:main",
+    }
+
+
+def test_packaging_metadata_does_not_use_scaffold_defaults() -> None:
+    pyproject = load_pyproject()
+
+    assert pyproject["project"]["requires-python"] != ">=3.11"
+    assert pyproject["project"]["dependencies"]
+    assert pyproject["tool"]["setuptools"].get("packages") != []
+    assert set(pyproject["project"]["scripts"]) == {
+        "contracts-export",
+        "contracts-compat",
     }
 
 
@@ -97,6 +177,150 @@ def test_console_script_entry_points_are_importable_and_invokable(
             == 0
         )
         assert main(["--baseline", str(baseline_dir), "--current", "HEAD"]) == 0
+
+
+def test_installed_distribution_imports_and_console_scripts_are_invokable(
+    tmp_path: pathlib.Path,
+) -> None:
+    smoke_env = os.environ.copy()
+    smoke_env.pop("PYTHONPATH", None)
+    smoke_env.pop("VIRTUAL_ENV", None)
+    smoke_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+    smoke_env["PIP_CACHE_DIR"] = str(tmp_path / "pip-cache")
+
+    venv_dir = tmp_path / "installed-artifact-venv"
+    create_venv = run_subprocess(
+        [
+            sys.executable,
+            "-m",
+            "venv",
+            "--system-site-packages",
+            str(venv_dir),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(create_venv)
+
+    python_bin = venv_executable(venv_dir, "python")
+    install_build_requirements_args = [
+        str(python_bin),
+        "-m",
+        "pip",
+        "install",
+        *load_pyproject()["build-system"]["requires"],
+    ]
+    wheel_dirs = local_build_requirement_wheel_dirs()
+    if wheel_dirs:
+        install_build_requirements_args[4:4] = [
+            "--no-index",
+            *[
+                item
+                for wheel_dir in wheel_dirs
+                for item in ("--find-links", str(wheel_dir))
+            ],
+        ]
+    install_build_requirements = run_subprocess(
+        install_build_requirements_args,
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(install_build_requirements)
+
+    install_project = run_subprocess(
+        [
+            str(python_bin),
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "--no-build-isolation",
+            "--ignore-installed",
+            str(PROJECT_ROOT),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(install_project)
+
+    installed_metadata = run_subprocess(
+        [
+            str(python_bin),
+            "-c",
+            "\n".join(
+                [
+                    "import importlib.metadata as metadata",
+                    "import json",
+                    "import contracts",
+                    (
+                        "distribution = "
+                        "metadata.distribution('project-ult-contracts')"
+                    ),
+                    (
+                        "scripts = {entry_point.name: entry_point.value "
+                        "for entry_point in distribution.entry_points "
+                        "if entry_point.group == 'console_scripts'}"
+                    ),
+                    (
+                        "print(json.dumps({"
+                        "'package': contracts.__name__, "
+                        "'version': contracts.__version__, "
+                        "'location': "
+                        "str(distribution.locate_file('').resolve()), "
+                        "'scripts': scripts"
+                        "}, sort_keys=True))"
+                    ),
+                ]
+            ),
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(installed_metadata)
+    metadata = json.loads(installed_metadata.stdout)
+    install_location = pathlib.Path(metadata.pop("location"))
+    assert install_location.is_relative_to(venv_dir.resolve())
+    assert metadata == {
+        "package": "contracts",
+        "version": "0.1.0",
+        "scripts": {
+            "contracts-export": "contracts.export.__main__:main",
+            "contracts-compat": "contracts.compat.__main__:main",
+        },
+    }
+
+    contracts_export = venv_executable(venv_dir, "contracts-export")
+    contracts_compat = venv_executable(venv_dir, "contracts-compat")
+    assert contracts_export.is_file()
+    assert contracts_compat.is_file()
+
+    baseline_dir = tmp_path / "installed-baseline"
+    export_result = run_subprocess(
+        [
+            str(contracts_export),
+            "--output-dir",
+            str(baseline_dir),
+            "--version",
+            "0.1.0",
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(export_result)
+    assert (baseline_dir / "manifest.json").is_file()
+
+    compat_result = run_subprocess(
+        [
+            str(contracts_compat),
+            "--baseline",
+            str(baseline_dir),
+            "--current",
+            "HEAD",
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(compat_result)
 
 
 def test_package_discovery_configuration_includes_contracts_tree() -> None:
