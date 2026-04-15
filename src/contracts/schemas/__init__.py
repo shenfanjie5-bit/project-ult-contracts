@@ -1,5 +1,6 @@
 """Ex-0 到 Ex-3、formal objects 与 cycle 对象 Schema 子包。"""
 
+from contracts.schemas.alpha import AlphaResult
 from contracts.schemas.formal_objects import (
     FORMAL_OBJECT_NAMES,
     FORMAL_OBJECT_REGISTRY,
@@ -17,6 +18,7 @@ from contracts.schemas.formal_objects import (
 )
 
 __all__ = [
+    "AlphaResult",
     "FormalObjectName",
     "FormalObjectBase",
     "WorldStateSnapshot",
