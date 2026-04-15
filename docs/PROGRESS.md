@@ -51,7 +51,7 @@
 | Issue | 标题 | 优先级 | 依赖 | 状态 |
 |-------|------|--------|------|------|
 | ISSUE-006 | 共享枚举与类型基元（GH #7） | P0 | ISSUE-005 | 已完成 |
-| ISSUE-007 | 错误码注册表 contracts.errors | P0 | ISSUE-006 | 未开始 |
+| ISSUE-007 | 错误码注册表 contracts.errors（GH #8） | P0 | ISSUE-006 | 已完成 |
 | ISSUE-008 | Ex-0 Metadata / 心跳 schema | P0 | ISSUE-006, ISSUE-007 | 未开始 |
 | ISSUE-009 | Ex-1 Candidate Facts schema | P0 | ISSUE-008 | 未开始 |
 | ISSUE-010 | Ex-2 Candidate Signals schema | P0 | ISSUE-009 | 未开始 |
@@ -76,6 +76,9 @@
 - [x] GH #7 / ISSUE-006：`bash scripts/ci.sh` 退出码 0，并继续执行包边界检查
 - [x] GH #7 / ISSUE-006：`git ls-files | grep -E '(__pycache__|\.DS_Store)$'` 无输出
 - [ ] GH #7 / ISSUE-006：`python -m pip install -e .[dev]` 未在当前沙箱执行成功；当前环境无 `python` 命令，`python3` 受 PEP 668 externally-managed-environment 限制
+- [x] GH #8 / ISSUE-007：`PYTHONPATH=src python3 - <<'PY' ...` 输出 `errors ok`
+- [x] GH #8 / ISSUE-007：`python3 -m pytest -q tests/test_errors.py tests/test_skeleton_imports.py tests/test_core_types.py` 退出码 0
+- [x] GH #8 / ISSUE-007：`bash scripts/ci.sh` 退出码 0；当前沙箱因 `setuptools` 不可用使用 `PYTHONPATH=src` 回退路径，并继续执行包边界检查
 
 ---
 
@@ -115,6 +118,7 @@
 
 | 日期 | 变更 | 来源 |
 |------|------|------|
+| 2026-04-15 | 完成 GH #8 / ISSUE-007 错误码注册表 `contracts.errors`，记录沙箱验证结果 | GH #8 |
 | 2026-04-15 | 完成 GH #7 / ISSUE-006 共享枚举、类型基元与 `ContractBaseModel`，记录沙箱验证结果 | GH #7 |
 | 2026-04-15 | 同步 milestone-0 与 GH #2–GH #6 完成状态，补齐阶段 0 验收证据 | GH #32 |
 | 2026-04-15 | 初始化任务拆解与进度表 | PM 初稿 |
