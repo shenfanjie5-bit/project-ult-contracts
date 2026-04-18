@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator
 
 
-__version__: str = "0.1.0"
+__version__: str = "0.1.1"
 VERSION_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
