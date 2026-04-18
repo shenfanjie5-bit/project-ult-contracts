@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 import contracts.schemas as schemas
 from contracts.compat import compare_schema_sets, load_schema_directory
-from contracts.core import ContractBaseModel
+from contracts.core import ContractBaseModel, __version__
 from contracts.errors import ErrorCode
 from contracts.export import SCHEMA_MODEL_REGISTRY, export_json_schemas
 
@@ -209,6 +209,26 @@ def test_downstream_contract_names_are_public_and_registered() -> None:
 
     assert schemas.CandidateGraphDelta is schemas.Ex3CandidateGraphDelta
     assert "CandidateGraphDelta" in schemas.__all__
+
+
+def test_entity_registry_required_entity_exports_are_public() -> None:
+    from contracts.schemas import (
+        CANONICAL_ID_RULE_VERSION,
+        CanonicalEntity,
+        EntityAlias,
+        EntityReference,
+        ResolutionCase,
+    )
+
+    assert CANONICAL_ID_RULE_VERSION == schemas.CANONICAL_ID_RULE_VERSION
+    assert isinstance(CANONICAL_ID_RULE_VERSION, str)
+    assert CANONICAL_ID_RULE_VERSION
+    assert CANONICAL_ID_RULE_VERSION != __version__
+    assert "CANONICAL_ID_RULE_VERSION" in schemas.__all__
+    assert CanonicalEntity is schemas.CanonicalEntity
+    assert EntityAlias is schemas.EntityAlias
+    assert EntityReference is schemas.EntityReference
+    assert ResolutionCase is schemas.ResolutionCase
 
 
 @pytest.mark.parametrize("contract_name,model", sorted(DOWNSTREAM_CONTRACTS.items()))

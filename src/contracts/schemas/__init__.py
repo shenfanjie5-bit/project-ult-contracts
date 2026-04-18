@@ -11,6 +11,7 @@ from contracts.schemas.ex_payloads import (
     Ex3CandidateGraphDelta,
 )
 from contracts.schemas.entities import (
+    CANONICAL_ID_RULE_VERSION,
     CanonicalEntity,
     EntityAlias,
     EntityReference,
@@ -57,6 +58,7 @@ __all__ = [
     "Ex1CandidateFact",
     "Ex2CandidateSignal",
     "Ex3CandidateGraphDelta",
+    "CANONICAL_ID_RULE_VERSION",
     "CanonicalEntity",
     "EntityAlias",
     "EntityReference",
