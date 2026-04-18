@@ -1,3 +1,0 @@
-[console_scripts]
-contracts-compat = contracts.compat.__main__:main
-contracts-export = contracts.export.__main__:main

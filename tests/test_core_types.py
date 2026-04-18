@@ -39,7 +39,10 @@ def test_core_reexports_shared_types() -> None:
         "NodeId",
         "EvidenceRef",
         "VersionString",
+        "SectorId",
+        "AwareDatetime",
         "Confidence",
+        "Score",
         "Magnitude",
     ]:
         assert hasattr(core, public_name)
@@ -104,6 +107,7 @@ def test_identifier_aliases_reject_empty_strings() -> None:
         node_id: core.NodeId
         evidence_ref: core.EvidenceRef
         version: core.VersionString
+        sector_id: core.SectorId
 
     valid_payload = {
         "entity_id": "entity-1",
@@ -115,6 +119,7 @@ def test_identifier_aliases_reject_empty_strings() -> None:
         "node_id": "node-1",
         "evidence_ref": "evidence-1",
         "version": "0.1.0",
+        "sector_id": "technology",
     }
 
     contract = IdentifierContract(**valid_payload)
@@ -180,3 +185,28 @@ def test_magnitude_rejects_coerced_or_non_finite_values(
 
     with pytest.raises(pydantic.ValidationError):
         MagnitudeContract(magnitude=magnitude)
+
+
+@pytest.mark.parametrize("score", [-1.01, 1.01])
+def test_score_rejects_values_outside_signed_unit_interval(score: float) -> None:
+    core = import_core()
+
+    class ScoreContract(core.ContractBaseModel):
+        score: core.Score
+
+    with pytest.raises(pydantic.ValidationError):
+        ScoreContract(score=score)
+
+
+@pytest.mark.parametrize(
+    "score",
+    [True, "0.5", float("inf"), float("-inf"), float("nan")],
+)
+def test_score_rejects_coerced_or_non_finite_values(score: object) -> None:
+    core = import_core()
+
+    class ScoreContract(core.ContractBaseModel):
+        score: core.Score
+
+    with pytest.raises(pydantic.ValidationError):
+        ScoreContract(score=score)

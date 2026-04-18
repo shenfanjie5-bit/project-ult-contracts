@@ -11,6 +11,7 @@ from contracts.core import (
     ContractBaseModel,
     Direction,
     EvidenceRef,
+    Score,
     VersionString,
 )
 
@@ -21,7 +22,7 @@ NonEmptyAlphaString: TypeAlias = Annotated[str, Field(min_length=1)]
 class AlphaResult(ContractBaseModel):
     """Frozen alpha analyzer output payload."""
 
-    score: float = Field(ge=-1.0, le=1.0)
+    score: Score
     direction: Direction
     confidence: Confidence
     rationale: NonEmptyAlphaString
