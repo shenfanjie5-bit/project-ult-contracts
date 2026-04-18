@@ -19,6 +19,7 @@ from contracts.core import (
     VersionString,
 )
 from contracts.core.types import NonEmptyString
+from contracts.errors import ErrorCode
 
 
 class ReasonerStatus(str, Enum):
@@ -39,14 +40,38 @@ class ReasonerErrorCategory(str, Enum):
     INTERNAL = "internal"
 
 
+_REASONER_ERROR_CODE_BY_CATEGORY = {
+    ReasonerErrorCategory.INPUT_CONTRACT: ErrorCode.REASONER_INPUT_CONTRACT_ERROR,
+    ReasonerErrorCategory.MODEL_PROVIDER: ErrorCode.REASONER_MODEL_PROVIDER_ERROR,
+    ReasonerErrorCategory.TOOL_EXECUTION: ErrorCode.REASONER_TOOL_EXECUTION_ERROR,
+    ReasonerErrorCategory.TIMEOUT: ErrorCode.REASONER_TIMEOUT_ERROR,
+    ReasonerErrorCategory.INTERNAL: ErrorCode.REASONER_INTERNAL_ERROR,
+}
+
+
 class ReasonerErrorClassification(ContractBaseModel):
     """Normalized reasoner-runtime error classification."""
 
+    code: ErrorCode
     category: ReasonerErrorCategory
     severity: Severity
     retryable: bool
     message: NonEmptyString
     details: dict[str, object] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_code_matches_category(self) -> Self:
+        """Keep reasoner error buckets aligned with the central registry."""
+
+        expected_code = _REASONER_ERROR_CODE_BY_CATEGORY[self.category]
+        if self.code is not expected_code:
+            raise ValueError(
+                "reasoner error code "
+                f"{self.code.value} does not match category "
+                f"{self.category.value}; expected {expected_code.value}"
+            )
+
+        return self
 
 
 class ReasonerRequest(ContractBaseModel):

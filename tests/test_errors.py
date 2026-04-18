@@ -45,6 +45,25 @@ def test_error_registry_covers_every_error_code() -> None:
     } == set(errors.ErrorCode)
 
 
+def test_reasoner_error_codes_are_registered() -> None:
+    errors = import_errors()
+    expected_codes = {
+        "REASONER_INPUT_CONTRACT_ERROR",
+        "REASONER_MODEL_PROVIDER_ERROR",
+        "REASONER_TOOL_EXECUTION_ERROR",
+        "REASONER_TIMEOUT_ERROR",
+        "REASONER_INTERNAL_ERROR",
+    }
+
+    registered_codes = {
+        entry.code.value for entry in errors.ERROR_CODE_REGISTRY.entries
+    }
+
+    assert expected_codes <= registered_codes
+    for code in expected_codes:
+        assert errors.ERROR_CODE_REGISTRY.get(code).code.value == code
+
+
 def test_error_descriptions_are_non_empty_chinese_strings() -> None:
     errors = import_errors()
 

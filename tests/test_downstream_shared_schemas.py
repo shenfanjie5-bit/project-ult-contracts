@@ -11,6 +11,7 @@ from pydantic import ValidationError
 import contracts.schemas as schemas
 from contracts.compat import compare_schema_sets, load_schema_directory
 from contracts.core import ContractBaseModel
+from contracts.errors import ErrorCode
 from contracts.export import SCHEMA_MODEL_REGISTRY, export_json_schemas
 
 
@@ -65,6 +66,7 @@ def graph_delta_payload() -> dict[str, object]:
 
 def reasoner_error_payload() -> dict[str, object]:
     return {
+        "code": "REASONER_TOOL_EXECUTION_ERROR",
         "category": "tool_execution",
         "severity": "error",
         "retryable": True,
@@ -334,6 +336,32 @@ def test_reasoner_error_classification_rejects_unknown_category() -> None:
     payload = {**reasoner_error_payload(), "category": "unknown"}
 
     with pytest.raises(ValidationError):
+        schemas.ReasonerErrorClassification.model_validate(payload)
+
+
+def test_reasoner_error_classification_requires_registered_code() -> None:
+    payload = reasoner_error_payload()
+    payload.pop("code")
+
+    with pytest.raises(ValidationError):
+        schemas.ReasonerErrorClassification.model_validate(payload)
+
+
+def test_reasoner_error_classification_uses_error_code_registry() -> None:
+    classification = schemas.ReasonerErrorClassification.model_validate(
+        reasoner_error_payload()
+    )
+
+    assert classification.code is ErrorCode.REASONER_TOOL_EXECUTION_ERROR
+
+
+def test_reasoner_error_classification_rejects_mismatched_code() -> None:
+    payload = {
+        **reasoner_error_payload(),
+        "code": "REASONER_TIMEOUT_ERROR",
+    }
+
+    with pytest.raises(ValidationError, match="expected REASONER_TOOL_EXECUTION_ERROR"):
         schemas.ReasonerErrorClassification.model_validate(payload)
 
 
