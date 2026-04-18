@@ -150,6 +150,13 @@ def get_error_description(code: ErrorCode | str) -> str:
     return ERROR_CODE_REGISTRY.get(code).description
 
 
+def validation_error_message(code: ErrorCode | str, message: str) -> str:
+    """Return stable error-code text for Pydantic validation messages."""
+
+    normalized_code = code if isinstance(code, ErrorCode) else ErrorCode(code)
+    return f"[{normalized_code.value}] {message}"
+
+
 def raise_contract_error(
     code: ErrorCode | str,
     message: str | None = None,
@@ -168,5 +175,6 @@ __all__ = [
     "ERROR_CODE_REGISTRY",
     "ContractError",
     "get_error_description",
+    "validation_error_message",
     "raise_contract_error",
 ]

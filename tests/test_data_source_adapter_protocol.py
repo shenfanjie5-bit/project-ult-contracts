@@ -1,33 +1,13 @@
 from __future__ import annotations
 
-import importlib
-import pathlib
-import sys
-from collections.abc import Iterator
-from contextlib import contextmanager
+from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import get_type_hints
 
 import pydantic
 import pytest
 
-
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-SRC_DIR = PROJECT_ROOT / "src"
-
-
-@contextmanager
-def prepend_src_path() -> Iterator[None]:
-    sys.path.insert(0, str(SRC_DIR))
-    try:
-        yield
-    finally:
-        sys.path.remove(str(SRC_DIR))
-
-
-def import_contract_module(module_name: str) -> object:
-    with prepend_src_path():
-        return importlib.import_module(module_name)
+from tests.conftest import import_contract_module
 
 
 def valid_cycle_payload() -> dict[str, object]:
@@ -179,6 +159,31 @@ def test_data_source_batch_rejects_invalid_nested_payloads() -> None:
 
     with pytest.raises(pydantic.ValidationError):
         protocols.DataSourceBatch(metadata=metadata_payload)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "payload_factory"),
+    [
+        ("facts", valid_fact_payload),
+        ("signals", valid_signal_payload),
+        ("graph_deltas", valid_graph_delta_payload),
+    ],
+)
+def test_data_source_batch_rejects_mixed_subsystem_payloads(
+    field_name: str,
+    payload_factory: Callable[[], dict[str, object]],
+) -> None:
+    protocols = import_contract_module("contracts.protocols")
+    payload = {**payload_factory(), "subsystem_id": "subsystem-filings"}
+
+    with pytest.raises(
+        pydantic.ValidationError,
+        match="CONTRACT_VALIDATION_ERROR",
+    ):
+        protocols.DataSourceBatch(
+            metadata=valid_metadata_payload(),
+            **{field_name: [payload]},
+        )
 
 
 def test_data_source_batch_defaults_payload_lists() -> None:

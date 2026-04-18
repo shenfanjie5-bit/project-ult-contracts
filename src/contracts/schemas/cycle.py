@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 from typing import Self
 
-from pydantic import ConfigDict, field_validator, model_validator
+from pydantic import ConfigDict, model_validator
 
 from contracts.core import (
+    AwareDatetime,
     ContractBaseModel,
     CycleId,
     VersionString,
     __version__,
 )
+from contracts.errors import ErrorCode, validation_error_message
 
 
 class CyclePhase(str, Enum):
@@ -33,32 +34,22 @@ class CycleMetadata(ContractBaseModel):
 
     cycle_id: CycleId
     phase: CyclePhase
-    started_at: datetime
-    ended_at: datetime | None = None
+    started_at: AwareDatetime
+    ended_at: AwareDatetime | None = None
     previous_cycle_id: CycleId | None = None
     version: VersionString = __version__
-
-    @field_validator("started_at", "ended_at")
-    @classmethod
-    def timestamps_must_be_timezone_aware(
-        cls, value: datetime | None
-    ) -> datetime | None:
-        """Require timezone-aware cycle timestamps when present."""
-
-        if value is None:
-            return None
-
-        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-            raise ValueError("cycle timestamps must be timezone-aware")
-
-        return value
 
     @model_validator(mode="after")
     def ended_at_must_not_precede_started_at(self) -> Self:
         """Ensure completed cycle windows are chronologically valid."""
 
         if self.ended_at is not None and self.ended_at < self.started_at:
-            raise ValueError("ended_at must be greater than or equal to started_at")
+            raise ValueError(
+                validation_error_message(
+                    ErrorCode.CONTRACT_VALIDATION_ERROR,
+                    "ended_at must be greater than or equal to started_at",
+                )
+            )
 
         return self
 

@@ -21,6 +21,9 @@ contracts-compat = "contracts.compat.__main__:main"
 package-dir = {"" = "src"}
 packages = {find = {where = ["src"]}}
 
+[tool.setuptools.package-data]
+contracts = ["baselines/*/json_schema/*.json"]
+
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]

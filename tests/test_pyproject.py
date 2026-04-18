@@ -322,6 +322,19 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     )
     assert_success(compat_result)
 
+    packaged_baseline_result = run_subprocess(
+        [
+            str(contracts_compat),
+            "--baseline",
+            "0.1.0",
+            "--current",
+            "HEAD",
+        ],
+        cwd=tmp_path,
+        env=smoke_env,
+    )
+    assert_success(packaged_baseline_result)
+
 
 def test_package_discovery_configuration_includes_contracts_tree() -> None:
     setuptools_config = load_pyproject()["tool"]["setuptools"]

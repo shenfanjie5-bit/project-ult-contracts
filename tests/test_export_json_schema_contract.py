@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -72,9 +73,98 @@ EX_PAYLOAD_REQUIRED_FIELDS = {
     },
 }
 
+NOW = datetime(2026, 4, 15, 12, 0, tzinfo=timezone.utc).isoformat()
+
 
 def load_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def conditional_rule_rejects(
+    rule: dict[str, object],
+    payload: dict[str, object],
+) -> bool:
+    condition = rule.get("if")
+    consequence = rule.get("then")
+    if not isinstance(condition, dict) or not isinstance(consequence, dict):
+        return False
+
+    return _condition_matches(condition, payload) and not _schema_fragment_matches(
+        consequence,
+        payload,
+    )
+
+
+def _condition_matches(
+    schema: dict[str, object],
+    payload: dict[str, object],
+) -> bool:
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return True
+
+    for field_name, field_schema in properties.items():
+        if not isinstance(field_schema, dict):
+            continue
+
+        value = payload.get(field_name)
+        if "const" in field_schema and value != field_schema["const"]:
+            return False
+
+        enum_values = field_schema.get("enum")
+        if isinstance(enum_values, list) and value not in enum_values:
+            return False
+
+    return True
+
+
+def _schema_fragment_matches(
+    schema: dict[str, object],
+    payload: dict[str, object],
+) -> bool:
+    required = schema.get("required")
+    if isinstance(required, list):
+        for field_name in required:
+            if isinstance(field_name, str) and field_name not in payload:
+                return False
+
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return True
+
+    for field_name, field_schema in properties.items():
+        if field_name not in payload or not isinstance(field_schema, dict):
+            continue
+
+        value = payload[field_name]
+        expected_type = field_schema.get("type")
+        if expected_type == "null" and value is not None:
+            return False
+
+        negated_schema = field_schema.get("not")
+        if (
+            isinstance(negated_schema, dict)
+            and negated_schema.get("type") == "null"
+            and value is None
+        ):
+            return False
+
+        if "const" in field_schema and value != field_schema["const"]:
+            return False
+
+    return True
+
+
+def assert_exported_schema_rejects_with_conditional_rule(
+    schema: dict[str, object],
+    payload: dict[str, object],
+) -> None:
+    rules = schema.get("allOf")
+    assert isinstance(rules, list)
+    assert any(
+        isinstance(rule, dict) and conditional_rule_rejects(rule, payload)
+        for rule in rules
+    )
 
 
 def test_schema_artifact_is_a_valid_contract_model() -> None:
@@ -190,3 +280,153 @@ def test_exported_formal_object_set_is_closed(tmp_path: Path) -> None:
 
     assert concrete_formal_keys == {name.value for name in FormalObjectName}
     assert "backtest_result" not in exported_text
+
+
+def test_exported_json_schema_encodes_resolution_case_invariants(
+    tmp_path: Path,
+) -> None:
+    export_json_schemas(tmp_path, version="0.1.0")
+    schema = load_json(tmp_path / "resolution_case.schema.json")
+    base_payload = {
+        "resolution_case_id": "resolution-1",
+        "input_alias": "Apple",
+        "decision": "matched",
+        "confidence": 0.9,
+        "candidate_entities": [
+            {
+                "entity_id": "AAPL",
+                "entity_type": "equity",
+                "canonical_id_rule_version": "0.1.0",
+            }
+        ],
+        "evidence_refs": ["fact-1"],
+        "resolved_at": NOW,
+        "canonical_id_rule_version": "0.1.0",
+    }
+
+    assert_exported_schema_rejects_with_conditional_rule(schema, base_payload)
+    assert_exported_schema_rejects_with_conditional_rule(
+        schema,
+        {
+            **base_payload,
+            "decision": "ambiguous",
+            "resolved_entity": {
+                "entity_id": "AAPL",
+                "entity_type": "equity",
+                "canonical_id_rule_version": "0.1.0",
+            },
+        },
+    )
+
+
+def test_exported_json_schema_encodes_reasoner_status_invariants(
+    tmp_path: Path,
+) -> None:
+    export_json_schemas(tmp_path, version="0.1.0")
+    result_schema = load_json(tmp_path / "reasoner_result.schema.json")
+    health_schema = load_json(tmp_path / "reasoner_health.schema.json")
+
+    assert_exported_schema_rejects_with_conditional_rule(
+        result_schema,
+        {
+            "result_id": "result-1",
+            "request_id": "request-1",
+            "status": "failed",
+            "reasoner_name": "fixture",
+            "reasoner_version": "0.1.0",
+            "output": {},
+            "completed_at": NOW,
+        },
+    )
+    assert_exported_schema_rejects_with_conditional_rule(
+        result_schema,
+        {
+            "result_id": "result-1",
+            "request_id": "request-1",
+            "status": "completed",
+            "reasoner_name": "fixture",
+            "reasoner_version": "0.1.0",
+            "output": {},
+            "completed_at": NOW,
+            "error_classification": {
+                "code": "REASONER_TOOL_EXECUTION_ERROR",
+                "category": "tool_execution",
+                "severity": "error",
+                "retryable": True,
+                "message": "tool call failed",
+            },
+        },
+    )
+    assert_exported_schema_rejects_with_conditional_rule(
+        health_schema,
+        {
+            "subsystem_id": "reasoner-runtime",
+            "version": "0.1.0",
+            "checked_at": NOW,
+            "status": "ok",
+            "last_success_at": NOW,
+            "pending_count": 0,
+            "error_classification": {
+                "code": "REASONER_TOOL_EXECUTION_ERROR",
+                "category": "tool_execution",
+                "severity": "error",
+                "retryable": True,
+                "message": "tool call failed",
+            },
+        },
+    )
+
+
+def test_exported_json_schema_encodes_reasoner_error_code_invariant(
+    tmp_path: Path,
+) -> None:
+    export_json_schemas(tmp_path, version="0.1.0")
+    schema = load_json(tmp_path / "reasoner_error_classification.schema.json")
+
+    assert_exported_schema_rejects_with_conditional_rule(
+        schema,
+        {
+            "code": "REASONER_TIMEOUT_ERROR",
+            "category": "tool_execution",
+            "severity": "error",
+            "retryable": True,
+            "message": "tool call failed",
+        },
+    )
+
+
+def test_exported_json_schema_marks_runtime_only_invariants(
+    tmp_path: Path,
+) -> None:
+    export_json_schemas(tmp_path, version="0.1.0")
+
+    cycle_schema = load_json(tmp_path / "cycle_metadata.schema.json")
+    graph_schema = load_json(tmp_path / "graph_snapshot.schema.json")
+
+    assert {
+        invariant["id"]
+        for invariant in cycle_schema["x-contract-runtime-invariants"]
+    } == {"cycle_metadata.ended_at_gte_started_at"}
+    assert {
+        invariant["id"]
+        for invariant in graph_schema["x-contract-runtime-invariants"]
+    } == {
+        "graph_snapshot.counts_match_payloads",
+        "graph_snapshot.edges_reference_declared_nodes",
+    }
+
+
+def test_exported_alpha_result_score_carries_runtime_strictness(
+    tmp_path: Path,
+) -> None:
+    export_json_schemas(tmp_path, version="0.1.0")
+    schema = load_json(tmp_path / "alpha_result.schema.json")
+    properties = schema["properties"]
+    assert isinstance(properties, dict)
+    score = properties["score"]
+    assert isinstance(score, dict)
+
+    assert score["x-contract-runtime-validation"] == {
+        "allow_inf_nan": False,
+        "strict": True,
+    }
