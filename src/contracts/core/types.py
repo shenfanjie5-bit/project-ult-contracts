@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, TypeAlias
 
-from pydantic import Field
+from pydantic import AwareDatetime, Field
 
 
 class ExType(str, Enum):
@@ -59,9 +59,14 @@ DeltaId: TypeAlias = NonEmptyString
 NodeId: TypeAlias = NonEmptyString
 EvidenceRef: TypeAlias = NonEmptyString
 VersionString: TypeAlias = NonEmptyString
+SectorId: TypeAlias = NonEmptyString
 Confidence: TypeAlias = Annotated[
     float,
     Field(strict=True, ge=0.0, le=1.0, allow_inf_nan=False),
+]
+Score: TypeAlias = Annotated[
+    float,
+    Field(strict=True, ge=-1.0, le=1.0, allow_inf_nan=False),
 ]
 Magnitude: TypeAlias = Annotated[
     float,
@@ -84,6 +89,9 @@ __all__ = [
     "NodeId",
     "EvidenceRef",
     "VersionString",
+    "SectorId",
+    "AwareDatetime",
     "Confidence",
+    "Score",
     "Magnitude",
 ]

@@ -10,6 +10,13 @@ from contracts.schemas.ex_payloads import (
     Ex2CandidateSignal,
     Ex3CandidateGraphDelta,
 )
+from contracts.schemas.entities import (
+    CanonicalEntity,
+    EntityAlias,
+    EntityReference,
+    EntityResolutionDecision,
+    ResolutionCase,
+)
 from contracts.schemas.formal_objects import (
     FORMAL_OBJECT_NAMES,
     FORMAL_OBJECT_REGISTRY,
@@ -25,6 +32,20 @@ from contracts.schemas.formal_objects import (
     WorldStateSnapshot,
     get_formal_object_model,
 )
+from contracts.schemas.graph import (
+    CandidateGraphDelta,
+    GraphImpactSnapshot,
+    GraphSnapshot,
+)
+from contracts.schemas.reasoner import (
+    ReasonerErrorCategory,
+    ReasonerErrorClassification,
+    ReasonerHealth,
+    ReasonerReplay,
+    ReasonerRequest,
+    ReasonerResult,
+    ReasonerStatus,
+)
 
 __all__ = [
     "AlphaResult",
@@ -36,6 +57,21 @@ __all__ = [
     "Ex1CandidateFact",
     "Ex2CandidateSignal",
     "Ex3CandidateGraphDelta",
+    "CanonicalEntity",
+    "EntityAlias",
+    "EntityReference",
+    "ResolutionCase",
+    "EntityResolutionDecision",
+    "ReasonerErrorClassification",
+    "ReasonerRequest",
+    "ReasonerResult",
+    "ReasonerReplay",
+    "ReasonerHealth",
+    "ReasonerStatus",
+    "ReasonerErrorCategory",
+    "CandidateGraphDelta",
+    "GraphSnapshot",
+    "GraphImpactSnapshot",
     "FormalObjectName",
     "FormalObjectBase",
     "WorldStateSnapshot",

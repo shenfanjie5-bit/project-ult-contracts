@@ -18,6 +18,7 @@ from contracts.core import (
     HeartbeatStatus,
     Magnitude,
     NodeId,
+    SectorId,
     SignalId,
     SubsystemId,
     VersionString,
@@ -137,7 +138,7 @@ class Ex2CandidateSignal(BaseExPayload):
     direction: Direction
     magnitude: Magnitude
     affected_entities: list[EntityId] = Field(min_length=1)
-    affected_sectors: list[str] = Field(min_length=1)
+    affected_sectors: list[SectorId] = Field(min_length=1)
     time_horizon: str = Field(min_length=1)
     evidence: list[EvidenceRef] = Field(min_length=1)
     confidence: Confidence
