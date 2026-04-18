@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import pathlib
 import sys
+from datetime import datetime, timezone
 
 import pydantic
 import pytest
@@ -92,6 +93,23 @@ def test_contract_base_model_strips_strings_and_validates_assignment() -> None:
 
     with pytest.raises(pydantic.ValidationError):
         contract.confidence = 1.1
+
+
+def test_aware_datetime_rejects_naive_datetimes_with_stable_error_code() -> None:
+    core = import_core()
+
+    class TimestampContract(core.ContractBaseModel):
+        observed_at: core.AwareDatetime
+
+    assert TimestampContract(
+        observed_at=datetime(2026, 4, 15, 12, 0, tzinfo=timezone.utc)
+    ).observed_at.tzinfo is not None
+
+    with pytest.raises(
+        pydantic.ValidationError,
+        match="CONTRACT_VALIDATION_ERROR",
+    ):
+        TimestampContract(observed_at=datetime(2026, 4, 15, 12, 0))
 
 
 def test_identifier_aliases_reject_empty_strings() -> None:

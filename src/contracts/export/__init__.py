@@ -84,6 +84,99 @@ SCHEMA_MODEL_REGISTRY: Mapping[str, type[ContractBaseModel]] = MappingProxyType(
     }
 )
 
+_RESOLUTION_CASE_RULES: tuple[dict[str, object], ...] = (
+    {
+        "if": {"properties": {"decision": {"const": "matched"}}},
+        "then": {
+            "required": ["resolved_entity"],
+            "properties": {"resolved_entity": {"not": {"type": "null"}}},
+        },
+    },
+    {
+        "if": {"properties": {"decision": {"enum": ["ambiguous", "unresolved"]}}},
+        "then": {"properties": {"resolved_entity": {"type": "null"}}},
+    },
+)
+
+_REASONER_RESULT_RULES: tuple[dict[str, object], ...] = (
+    {
+        "if": {"properties": {"status": {"const": "failed"}}},
+        "then": {
+            "required": ["error_classification"],
+            "properties": {"error_classification": {"not": {"type": "null"}}},
+        },
+    },
+    {
+        "if": {"properties": {"status": {"enum": ["accepted", "completed"]}}},
+        "then": {"properties": {"error_classification": {"type": "null"}}},
+    },
+)
+
+_REASONER_HEALTH_RULES: tuple[dict[str, object], ...] = (
+    {
+        "if": {"properties": {"status": {"const": "failed"}}},
+        "then": {
+            "required": ["error_classification"],
+            "properties": {"error_classification": {"not": {"type": "null"}}},
+        },
+    },
+    {
+        "if": {"properties": {"status": {"const": "ok"}}},
+        "then": {"properties": {"error_classification": {"type": "null"}}},
+    },
+)
+
+_REASONER_ERROR_CODE_BY_CATEGORY: Mapping[str, str] = MappingProxyType(
+    {
+        "input_contract": "REASONER_INPUT_CONTRACT_ERROR",
+        "model_provider": "REASONER_MODEL_PROVIDER_ERROR",
+        "tool_execution": "REASONER_TOOL_EXECUTION_ERROR",
+        "timeout": "REASONER_TIMEOUT_ERROR",
+        "internal": "REASONER_INTERNAL_ERROR",
+    }
+)
+
+_REASONER_ERROR_CLASSIFICATION_RULES: tuple[dict[str, object], ...] = tuple(
+    {
+        "if": {"properties": {"category": {"const": category}}},
+        "then": {"properties": {"code": {"const": code}}},
+    }
+    for category, code in _REASONER_ERROR_CODE_BY_CATEGORY.items()
+)
+
+_RUNTIME_INVARIANTS_BY_TITLE: Mapping[str, tuple[dict[str, str], ...]] = (
+    MappingProxyType(
+        {
+            "CycleMetadata": (
+                {
+                    "id": "cycle_metadata.ended_at_gte_started_at",
+                    "description": (
+                        "ended_at must be greater than or equal to started_at; "
+                        "enforced by Pydantic runtime validation."
+                    ),
+                },
+            ),
+            "GraphSnapshot": (
+                {
+                    "id": "graph_snapshot.counts_match_payloads",
+                    "description": (
+                        "node_count and edge_count must match the nodes and "
+                        "edges array lengths; enforced by Pydantic runtime "
+                        "validation."
+                    ),
+                },
+                {
+                    "id": "graph_snapshot.edges_reference_declared_nodes",
+                    "description": (
+                        "edge source_node and target_node values must reference "
+                        "declared nodes; enforced by Pydantic runtime validation."
+                    ),
+                },
+            ),
+        }
+    )
+)
+
 
 def iter_schema_models() -> Iterator[tuple[str, type[ContractBaseModel]]]:
     """按稳定 registry 顺序返回待导出的 Pydantic 模型。"""
@@ -105,6 +198,7 @@ def export_json_schemas(
     for name, model in iter_schema_models():
         source_model = f"{model.__module__}.{model.__qualname__}"
         schema = model.model_json_schema()
+        _augment_exported_schema(schema, model)
         schema["x-contract-version"] = version
         schema["x-source-model"] = source_model
 
@@ -133,6 +227,86 @@ def export_json_schemas(
     )
 
     return tuple(artifacts)
+
+
+def _augment_exported_schema(
+    schema: dict[str, object],
+    model: type[ContractBaseModel],
+) -> None:
+    """Add contract validation metadata not emitted by Pydantic JSON Schema."""
+
+    _annotate_runtime_validation(schema, model)
+    for node in _walk_schema_nodes(schema):
+        title = node.get("title")
+        if title == "ResolutionCase":
+            _add_all_of_rules(node, _RESOLUTION_CASE_RULES)
+        if title == "ReasonerResult":
+            _add_all_of_rules(node, _REASONER_RESULT_RULES)
+        if title == "ReasonerHealth":
+            _add_all_of_rules(node, _REASONER_HEALTH_RULES)
+        if title == "ReasonerErrorClassification":
+            _add_all_of_rules(node, _REASONER_ERROR_CLASSIFICATION_RULES)
+        if isinstance(title, str) and title in _RUNTIME_INVARIANTS_BY_TITLE:
+            node["x-contract-runtime-invariants"] = list(
+                _RUNTIME_INVARIANTS_BY_TITLE[title]
+            )
+
+
+def _annotate_runtime_validation(
+    schema: dict[str, object],
+    model: type[ContractBaseModel],
+) -> None:
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return
+
+    for field_name, field_info in model.model_fields.items():
+        property_schema = properties.get(field_name)
+        if not isinstance(property_schema, dict):
+            continue
+
+        runtime_validation: dict[str, object] = {}
+        for metadata in field_info.metadata:
+            strict = getattr(metadata, "strict", None)
+            if strict is not None:
+                runtime_validation["strict"] = strict
+
+            allow_inf_nan = getattr(metadata, "allow_inf_nan", None)
+            if allow_inf_nan is not None:
+                runtime_validation["allow_inf_nan"] = allow_inf_nan
+
+        if runtime_validation:
+            property_schema["x-contract-runtime-validation"] = runtime_validation
+
+
+def _walk_schema_nodes(schema: dict[str, object]) -> Iterator[dict[str, object]]:
+    seen_ids: set[int] = set()
+    stack: list[object] = [schema]
+
+    while stack:
+        value = stack.pop()
+        if isinstance(value, dict):
+            value_id = id(value)
+            if value_id in seen_ids:
+                continue
+            seen_ids.add(value_id)
+            yield value
+            stack.extend(value.values())
+        elif isinstance(value, list):
+            stack.extend(value)
+
+
+def _add_all_of_rules(
+    schema: dict[str, object],
+    rules: tuple[dict[str, object], ...],
+) -> None:
+    all_of = schema.setdefault("allOf", [])
+    if not isinstance(all_of, list):
+        return
+
+    for rule in rules:
+        if rule not in all_of:
+            all_of.append(rule)
 
 
 __all__ = [

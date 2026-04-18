@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
 
 from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from contracts.core import (
+    AwareDatetime,
     Confidence,
     ContractBaseModel,
     DeltaId,
@@ -23,6 +23,7 @@ from contracts.core import (
     SubsystemId,
     VersionString,
 )
+from contracts.errors import ErrorCode, validation_error_message
 
 
 FORBIDDEN_INGEST_METADATA_FIELDS: frozenset[str] = frozenset(
@@ -45,8 +46,11 @@ class BaseExPayload(ContractBaseModel):
             if forbidden_fields:
                 field_list = ", ".join(sorted(forbidden_fields))
                 raise ValueError(
-                    f"ingest metadata fields are not allowed in Ex payloads: "
-                    f"{field_list}"
+                    validation_error_message(
+                        ErrorCode.FORBIDDEN_INGEST_METADATA,
+                        "ingest metadata fields are not allowed in Ex payloads: "
+                        f"{field_list}",
+                    )
                 )
 
         return data
@@ -56,41 +60,10 @@ class Ex0Metadata(BaseExPayload):
     """Ex-0 metadata and heartbeat payload."""
 
     version: VersionString
-    heartbeat_at: datetime
+    heartbeat_at: AwareDatetime
     status: HeartbeatStatus
-    last_output_at: datetime | None
+    last_output_at: AwareDatetime | None
     pending_count: int = Field(ge=0, strict=True)
-
-    @field_validator("heartbeat_at")
-    @classmethod
-    def validate_heartbeat_at_timezone(cls, heartbeat_at: datetime) -> datetime:
-        """Require timezone-aware heartbeat timestamps."""
-
-        if (
-            heartbeat_at.tzinfo is None
-            or heartbeat_at.tzinfo.utcoffset(heartbeat_at) is None
-        ):
-            raise ValueError("heartbeat_at must be timezone-aware")
-
-        return heartbeat_at
-
-    @field_validator("last_output_at")
-    @classmethod
-    def validate_last_output_at_timezone(
-        cls, last_output_at: datetime | None
-    ) -> datetime | None:
-        """Require timezone-aware output timestamps when present."""
-
-        if last_output_at is None:
-            return None
-
-        if (
-            last_output_at.tzinfo is None
-            or last_output_at.tzinfo.utcoffset(last_output_at) is None
-        ):
-            raise ValueError("last_output_at must be timezone-aware")
-
-        return last_output_at
 
 
 class Ex1CandidateFact(BaseExPayload):
@@ -102,7 +75,7 @@ class Ex1CandidateFact(BaseExPayload):
     fact_content: dict[str, object]
     confidence: Confidence
     source_reference: dict[str, object]
-    extracted_at: datetime
+    extracted_at: AwareDatetime
 
     @field_validator("fact_content", "source_reference")
     @classmethod
@@ -112,22 +85,14 @@ class Ex1CandidateFact(BaseExPayload):
         """Reject empty structured payload fields."""
 
         if not value:
-            raise ValueError(f"{info.field_name} must not be empty")
+            raise ValueError(
+                validation_error_message(
+                    ErrorCode.CONTRACT_VALIDATION_ERROR,
+                    f"{info.field_name} must not be empty",
+                )
+            )
 
         return value
-
-    @field_validator("extracted_at")
-    @classmethod
-    def validate_extracted_at_timezone(cls, extracted_at: datetime) -> datetime:
-        """Require timezone-aware extraction timestamps."""
-
-        if (
-            extracted_at.tzinfo is None
-            or extracted_at.tzinfo.utcoffset(extracted_at) is None
-        ):
-            raise ValueError("extracted_at must be timezone-aware")
-
-        return extracted_at
 
 
 class Ex2CandidateSignal(BaseExPayload):

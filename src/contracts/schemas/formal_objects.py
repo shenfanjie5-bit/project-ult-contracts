@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
 from enum import Enum
 from types import MappingProxyType
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field
 
-from contracts.core import ContractBaseModel, CycleId, VersionString, Zone
+from contracts.core import (
+    AwareDatetime,
+    ContractBaseModel,
+    CycleId,
+    VersionString,
+    Zone,
+)
 from contracts.errors import ContractError, ErrorCode
 
 
@@ -34,19 +39,9 @@ class FormalObjectBase(ContractBaseModel):
     object_name: FormalObjectName
     zone: Literal[Zone.FORMAL] = Zone.FORMAL
     version: VersionString
-    created_at: datetime
+    created_at: AwareDatetime
     cycle_id: CycleId | None = None
     payload: dict[str, object]
-
-    @field_validator("created_at")
-    @classmethod
-    def validate_created_at_timezone(cls, created_at: datetime) -> datetime:
-        """Require timezone-aware timestamps for persisted formal objects."""
-
-        if created_at.tzinfo is None or created_at.tzinfo.utcoffset(created_at) is None:
-            raise ValueError("created_at must be timezone-aware")
-
-        return created_at
 
 
 class WorldStateSnapshot(FormalObjectBase):

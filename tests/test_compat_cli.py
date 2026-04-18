@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import json
-import os
 import pathlib
 import shutil
 import subprocess
 import sys
 from collections.abc import Callable
-from importlib.metadata import EntryPoint
 
+from tests.conftest import (
+    PROJECT_ROOT,
+    load_console_script,
+    prepend_src_path,
+    src_pythonpath_env,
+)
 
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-SRC_DIR = PROJECT_ROOT / "src"
-sys.path.insert(0, str(SRC_DIR))
-
-from contracts.export import export_json_schemas  # noqa: E402
+with prepend_src_path():
+    from contracts.export import export_json_schemas
 
 
 def export_schema_pair(tmp_path: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]:
@@ -57,8 +58,6 @@ def run_compat(
     current: pathlib.Path | str,
     *extra_args: str,
 ) -> subprocess.CompletedProcess[str]:
-    environment = os.environ.copy()
-    environment["PYTHONPATH"] = str(SRC_DIR)
     return subprocess.run(
         [
             sys.executable,
@@ -71,7 +70,7 @@ def run_compat(
             *extra_args,
         ],
         cwd=PROJECT_ROOT,
-        env=environment,
+        env=src_pythonpath_env(),
         check=False,
         capture_output=True,
         text=True,
@@ -111,7 +110,7 @@ def test_python_module_compat_cli_accepts_checked_in_baseline_version(
             str(output),
         ],
         cwd=PROJECT_ROOT,
-        env={**os.environ, "PYTHONPATH": str(SRC_DIR)},
+        env=src_pythonpath_env(),
         check=False,
         capture_output=True,
         text=True,
@@ -124,11 +123,10 @@ def test_python_module_compat_cli_accepts_checked_in_baseline_version(
 
 
 def test_contracts_compat_entry_point_is_callable(tmp_path: pathlib.Path) -> None:
-    main = EntryPoint(
-        name="contracts-compat",
-        value="contracts.compat.__main__:main",
-        group="console_scripts",
-    ).load()
+    main = load_console_script(
+        "contracts-compat",
+        "contracts.compat.__main__:main",
+    )
     baseline = tmp_path / "baseline"
     export_json_schemas(baseline, version="0.1.0")
 

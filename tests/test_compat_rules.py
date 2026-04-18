@@ -274,6 +274,42 @@ def test_compare_schema_sets_detects_type_ref_and_anyof_changes(
     }.issubset(change_types(result))
 
 
+def test_compare_schema_sets_detects_runtime_validation_metadata_changes(
+    tmp_path: pathlib.Path,
+) -> None:
+    baseline, current = export_schema_pair(tmp_path)
+
+    def remove_score_strictness(schema: dict[str, object]) -> None:
+        properties = schema["properties"]
+        assert isinstance(properties, dict)
+        score = properties["score"]
+        assert isinstance(score, dict)
+        score.pop("x-contract-runtime-validation")
+
+    mutate_schema(current, "alpha_result", remove_score_strictness)
+
+    result = compare_export_dirs(baseline, current)
+
+    assert not result.is_compatible
+    assert "field_runtime_validation_changed" in change_types(result)
+
+
+def test_compare_schema_sets_detects_schema_invariant_changes(
+    tmp_path: pathlib.Path,
+) -> None:
+    baseline, current = export_schema_pair(tmp_path)
+
+    def remove_resolution_case_invariants(schema: dict[str, object]) -> None:
+        schema.pop("allOf")
+
+    mutate_schema(current, "resolution_case", remove_resolution_case_invariants)
+
+    result = compare_export_dirs(baseline, current)
+
+    assert not result.is_compatible
+    assert "schema_invariant_changed" in change_types(result)
+
+
 def test_compare_schema_sets_compares_enum_values_conservatively(
     tmp_path: pathlib.Path,
 ) -> None:

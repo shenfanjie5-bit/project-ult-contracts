@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, TypeAlias
 
-from pydantic import AwareDatetime, Field
+from pydantic import AfterValidator, Field
 
 
 class ExType(str, Enum):
@@ -49,6 +50,20 @@ class HeartbeatStatus(str, Enum):
 
 
 NonEmptyString: TypeAlias = Annotated[str, Field(min_length=1)]
+
+
+def _validate_aware_datetime(value: datetime) -> datetime:
+    """Require timezone-aware datetimes across contract models."""
+
+    if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+        raise ValueError(
+            "[CONTRACT_VALIDATION_ERROR] datetime must be timezone-aware"
+        )
+
+    return value
+
+
+AwareDatetime: TypeAlias = Annotated[datetime, AfterValidator(_validate_aware_datetime)]
 
 EntityId: TypeAlias = NonEmptyString
 SubsystemId: TypeAlias = NonEmptyString

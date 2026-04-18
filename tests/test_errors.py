@@ -31,6 +31,7 @@ def test_errors_public_api_imports() -> None:
         "ERROR_CODE_REGISTRY",
         "ContractError",
         "get_error_description",
+        "validation_error_message",
         "raise_contract_error",
     ]:
         assert hasattr(errors, public_name)
@@ -111,6 +112,15 @@ def test_contract_error_normalizes_string_error_code() -> None:
 
     assert error.code is errors.ErrorCode.CONTRACT_VALIDATION_ERROR
     assert error.message == "合同校验失败"
+
+
+def test_validation_error_message_includes_stable_error_code() -> None:
+    errors = import_errors()
+
+    assert errors.validation_error_message(
+        errors.ErrorCode.FORBIDDEN_INGEST_METADATA,
+        "submitted_at is not allowed",
+    ) == "[FORBIDDEN_INGEST_METADATA] submitted_at is not allowed"
 
 
 def test_raise_contract_error_raises_contract_error_with_details() -> None:

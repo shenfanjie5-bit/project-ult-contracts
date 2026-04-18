@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel, field_validator
 
+from contracts.core.types import AwareDatetime
+
 
 __version__: str = "0.1.0"
 VERSION_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
@@ -14,7 +16,7 @@ class ContractVersionEntry(BaseModel):
     """契约版本发布记录。"""
 
     version: str
-    released_at: datetime
+    released_at: AwareDatetime
     compatibility_note: str = ""
     breaking: bool = False
 
@@ -24,14 +26,6 @@ class ContractVersionEntry(BaseModel):
         """确保版本号为三段式语义版本。"""
         if not VERSION_PATTERN.fullmatch(value):
             raise ValueError("version must use MAJOR.MINOR.PATCH format")
-        return value
-
-    @field_validator("released_at")
-    @classmethod
-    def released_at_must_be_timezone_aware(cls, value: datetime) -> datetime:
-        """确保发布时间包含时区信息。"""
-        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-            raise ValueError("released_at must be timezone-aware")
         return value
 
 

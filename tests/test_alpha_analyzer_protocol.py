@@ -1,32 +1,12 @@
 from __future__ import annotations
 
-import importlib
-import pathlib
-import sys
-from collections.abc import Iterator, Mapping
-from contextlib import contextmanager
+from collections.abc import Mapping
 from typing import get_type_hints
 
 import pydantic
 import pytest
 
-
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-SRC_DIR = PROJECT_ROOT / "src"
-
-
-@contextmanager
-def prepend_src_path() -> Iterator[None]:
-    sys.path.insert(0, str(SRC_DIR))
-    try:
-        yield
-    finally:
-        sys.path.remove(str(SRC_DIR))
-
-
-def import_contract_module(module_name: str) -> object:
-    with prepend_src_path():
-        return importlib.import_module(module_name)
+from tests.conftest import import_contract_module
 
 
 def valid_alpha_result_payload() -> dict[str, object]:
@@ -90,6 +70,16 @@ def test_alpha_result_required_fields_are_enforced(field_name: str) -> None:
 
 @pytest.mark.parametrize("score", [-1.01, 1.01])
 def test_alpha_result_score_rejects_out_of_bounds_values(score: float) -> None:
+    schemas = import_contract_module("contracts.schemas")
+
+    with pytest.raises(pydantic.ValidationError):
+        schemas.AlphaResult(**{**valid_alpha_result_payload(), "score": score})
+
+
+@pytest.mark.parametrize("score", ["0.5", True, float("inf"), float("nan")])
+def test_alpha_result_score_rejects_coercion_and_non_finite_values(
+    score: object,
+) -> None:
     schemas = import_contract_module("contracts.schemas")
 
     with pytest.raises(pydantic.ValidationError):

@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Mapping
+from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 
 from pydantic import Field
@@ -89,6 +91,23 @@ COMPATIBILITY_RULES: tuple[CompatibilityRule, ...] = (
         severity=Severity.ERROR,
         description="Enum value removals are breaking; additions are compatible.",
         applies_to=("enum",),
+    ),
+    CompatibilityRule(
+        rule_id="schema_invariant_changed",
+        rule_name="Schema invariant change",
+        severity=Severity.ERROR,
+        description="JSON Schema dependent invariants must not change silently.",
+        applies_to=("allOf", "x-contract-runtime-invariants"),
+    ),
+    CompatibilityRule(
+        rule_id="field_runtime_validation_changed",
+        rule_name="Field runtime validation change",
+        severity=Severity.ERROR,
+        description=(
+            "Runtime scalar validation metadata such as strictness must not "
+            "change silently."
+        ),
+        applies_to=("properties",),
     ),
 )
 
@@ -186,8 +205,10 @@ def check_compatibility(
 ) -> CompatibilityCheckResult:
     """加载导出目录并执行兼容性检查。"""
 
-    baseline_dir = _resolve_schema_directory(baseline)
-    baseline_schemas = load_schema_directory(baseline_dir)
+    baseline_schemas = _load_schema_reference(
+        baseline,
+        allow_missing_schema_files=False,
+    )
     baseline_label = str(baseline)
 
     if str(current) == "HEAD":
@@ -201,9 +222,8 @@ def check_compatibility(
                 current_label="HEAD",
             )
 
-    current_dir = _resolve_schema_directory(current)
-    current_schemas = _load_schema_directory(
-        current_dir,
+    current_schemas = _load_schema_reference(
+        current,
         allow_missing_schema_files=True,
     )
     return compare_schema_sets(
@@ -211,6 +231,32 @@ def check_compatibility(
         current_schemas,
         baseline_label=baseline_label,
         current_label=str(current),
+    )
+
+
+def _load_schema_reference(
+    reference: str | Path,
+    *,
+    allow_missing_schema_files: bool,
+) -> dict[str, dict[str, object]]:
+    filesystem_dir = _resolve_schema_directory(reference)
+    if (filesystem_dir / "manifest.json").is_file():
+        return _load_schema_directory(
+            filesystem_dir,
+            allow_missing_schema_files=allow_missing_schema_files,
+        )
+
+    packaged_dir = _resolve_packaged_schema_directory(reference)
+    if packaged_dir is not None:
+        with resources.as_file(packaged_dir) as schema_dir:
+            return _load_schema_directory(
+                schema_dir,
+                allow_missing_schema_files=allow_missing_schema_files,
+            )
+
+    return _load_schema_directory(
+        filesystem_dir,
+        allow_missing_schema_files=allow_missing_schema_files,
     )
 
 
@@ -227,6 +273,22 @@ def _resolve_schema_directory(reference: str | Path) -> Path:
             return baseline_dir
 
     return candidate
+
+
+def _resolve_packaged_schema_directory(reference: str | Path) -> Traversable | None:
+    version = str(reference)
+    if not version or "/" in version or "\\" in version:
+        return None
+
+    baseline_dir = resources.files("contracts").joinpath(
+        "baselines",
+        version,
+        "json_schema",
+    )
+    if baseline_dir.joinpath("manifest.json").is_file():
+        return baseline_dir
+
+    return None
 
 
 def _compare_schema(
@@ -299,6 +361,7 @@ def _compare_schema(
         )
 
     _compare_enums(schema_name, baseline_schema, current_schema, events)
+    _compare_contract_extensions(schema_name, baseline_schema, current_schema, events)
 
 
 def _compare_property_shape(
@@ -328,6 +391,11 @@ def _compare_property_shape(
         ("$ref", "field_ref_changed", "$ref"),
         ("anyOf", "field_any_of_changed", "anyOf"),
         ("oneOf", "field_one_of_changed", "oneOf"),
+        (
+            "x-contract-runtime-validation",
+            "field_runtime_validation_changed",
+            "runtime validation",
+        ),
     )
     for key, change_type, label in checks:
         baseline_value = baseline_property.get(key)
@@ -347,6 +415,54 @@ def _compare_property_shape(
                 breaking=True,
             )
         )
+
+
+def _compare_contract_extensions(
+    schema_name: str,
+    baseline_schema: Mapping[str, object],
+    current_schema: Mapping[str, object],
+    events: list[CompatibilityEvent],
+) -> None:
+    baseline_extensions = _collect_contract_extension_values(baseline_schema)
+    current_extensions = _collect_contract_extension_values(current_schema)
+
+    for pointer in sorted(set(baseline_extensions).union(current_extensions)):
+        if baseline_extensions.get(pointer) == current_extensions.get(pointer):
+            continue
+
+        events.append(
+            CompatibilityEvent(
+                schema_name=schema_name,
+                change_type="schema_invariant_changed",
+                json_pointer=pointer,
+                message=f"contract invariant metadata changed at {pointer}",
+                breaking=True,
+            )
+        )
+
+
+def _collect_contract_extension_values(
+    value: object,
+    pointer: str = "",
+) -> dict[str, object]:
+    extensions: dict[str, object] = {}
+
+    if isinstance(value, Mapping):
+        for key in ("allOf", "x-contract-runtime-invariants"):
+            if key in value:
+                key_pointer = f"{pointer}/{_escape_json_pointer(key)}"
+                extensions[key_pointer] = value[key]
+
+        for key, child in value.items():
+            child_pointer = f"{pointer}/{_escape_json_pointer(str(key))}"
+            extensions.update(_collect_contract_extension_values(child, child_pointer))
+
+    if isinstance(value, list):
+        for index, child in enumerate(value):
+            child_pointer = f"{pointer}/{index}"
+            extensions.update(_collect_contract_extension_values(child, child_pointer))
+
+    return extensions
 
 
 def _compare_enums(

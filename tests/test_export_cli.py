@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 import json
-import os
 import pathlib
 import subprocess
 import sys
-from importlib.metadata import EntryPoint
 
-
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-SRC_DIR = PROJECT_ROOT / "src"
+from tests.conftest import PROJECT_ROOT, load_console_script, src_pythonpath_env
 
 
 def test_python_module_export_cli_writes_json_schemas(tmp_path: pathlib.Path) -> None:
-    environment = os.environ.copy()
-    environment["PYTHONPATH"] = str(SRC_DIR)
     output_dir = tmp_path / "json_schema"
 
     result = subprocess.run(
@@ -28,7 +22,7 @@ def test_python_module_export_cli_writes_json_schemas(tmp_path: pathlib.Path) ->
             "0.1.0",
         ],
         cwd=PROJECT_ROOT,
-        env=environment,
+        env=src_pythonpath_env(),
         check=False,
         capture_output=True,
         text=True,
@@ -40,15 +34,10 @@ def test_python_module_export_cli_writes_json_schemas(tmp_path: pathlib.Path) ->
 
 
 def test_contracts_export_entry_point_is_callable(tmp_path: pathlib.Path) -> None:
-    sys.path.insert(0, str(SRC_DIR))
-    try:
-        main = EntryPoint(
-            name="contracts-export",
-            value="contracts.export.__main__:main",
-            group="console_scripts",
-        ).load()
-    finally:
-        sys.path.remove(str(SRC_DIR))
+    main = load_console_script(
+        "contracts-export",
+        "contracts.export.__main__:main",
+    )
 
     output_dir = tmp_path / "entrypoint_schemas"
 
