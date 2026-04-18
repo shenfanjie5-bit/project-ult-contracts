@@ -18,6 +18,9 @@ from contracts.core import (
 from contracts.core.types import NonEmptyString
 
 
+CANONICAL_ID_RULE_VERSION: VersionString = "ent-id-rule-v1"
+
+
 class EntityResolutionDecision(str, Enum):
     """Stable resolution outcomes for entity-registry contracts."""
 
@@ -90,6 +93,7 @@ class ResolutionCase(ContractBaseModel):
 
 
 __all__ = [
+    "CANONICAL_ID_RULE_VERSION",
     "EntityResolutionDecision",
     "CanonicalEntity",
     "EntityAlias",
