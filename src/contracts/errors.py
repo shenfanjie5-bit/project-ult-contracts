@@ -20,6 +20,11 @@ class ErrorCode(str, Enum):
     UNKNOWN_FORMAL_OBJECT = "UNKNOWN_FORMAL_OBJECT"
     PROTOCOL_SIGNATURE_MISMATCH = "PROTOCOL_SIGNATURE_MISMATCH"
     INCOMPATIBLE_CONTRACT_CHANGE = "INCOMPATIBLE_CONTRACT_CHANGE"
+    REASONER_INPUT_CONTRACT_ERROR = "REASONER_INPUT_CONTRACT_ERROR"
+    REASONER_MODEL_PROVIDER_ERROR = "REASONER_MODEL_PROVIDER_ERROR"
+    REASONER_TOOL_EXECUTION_ERROR = "REASONER_TOOL_EXECUTION_ERROR"
+    REASONER_TIMEOUT_ERROR = "REASONER_TIMEOUT_ERROR"
+    REASONER_INTERNAL_ERROR = "REASONER_INTERNAL_ERROR"
 
 
 class ErrorCodeEntry(ContractBaseModel):
@@ -97,6 +102,26 @@ ERROR_CODE_REGISTRY = ErrorCodeRegistry(
         ErrorCodeEntry(
             code=ErrorCode.INCOMPATIBLE_CONTRACT_CHANGE,
             description="合同变更不兼容",
+        ),
+        ErrorCodeEntry(
+            code=ErrorCode.REASONER_INPUT_CONTRACT_ERROR,
+            description="Reasoner 输入合同校验失败",
+        ),
+        ErrorCodeEntry(
+            code=ErrorCode.REASONER_MODEL_PROVIDER_ERROR,
+            description="Reasoner 模型提供方调用失败",
+        ),
+        ErrorCodeEntry(
+            code=ErrorCode.REASONER_TOOL_EXECUTION_ERROR,
+            description="Reasoner 工具执行失败",
+        ),
+        ErrorCodeEntry(
+            code=ErrorCode.REASONER_TIMEOUT_ERROR,
+            description="Reasoner 执行超时",
+        ),
+        ErrorCodeEntry(
+            code=ErrorCode.REASONER_INTERNAL_ERROR,
+            description="Reasoner 内部错误",
         ),
     )
 )
