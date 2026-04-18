@@ -156,14 +156,18 @@ def valid_payloads() -> dict[str, dict[str, object]]:
             "cycle_id": "cycle-20260415-001",
             "version": "0.1.0",
             "created_at": NOW,
-            "node_count": 1,
+            "node_count": 2,
             "edge_count": 1,
             "nodes": [
                 {
                     "node_id": "AAPL",
                     "labels": ["entity"],
                     "entity": entity_reference_payload(),
-                }
+                },
+                {
+                    "node_id": "technology",
+                    "labels": ["sector"],
+                },
             ],
             "edges": [
                 {
@@ -242,9 +246,87 @@ def test_downstream_contract_required_fields_are_enforced(
 
 
 def test_graph_snapshot_counts_must_match_payload_lengths() -> None:
-    payload = {**valid_payloads()["graph_snapshot"], "node_count": 2}
+    payload = {**valid_payloads()["graph_snapshot"], "node_count": 3}
 
     with pytest.raises(ValidationError, match="node_count"):
+        schemas.GraphSnapshot.model_validate(payload)
+
+
+def test_resolution_case_matched_requires_resolved_entity() -> None:
+    payload = valid_payloads()["resolution_case"]
+    payload.pop("resolved_entity")
+
+    with pytest.raises(ValidationError, match="resolved_entity"):
+        schemas.ResolutionCase.model_validate(payload)
+
+
+@pytest.mark.parametrize("decision", ["ambiguous", "unresolved"])
+def test_resolution_case_unmatched_decision_rejects_resolved_entity(
+    decision: str,
+) -> None:
+    payload = {**valid_payloads()["resolution_case"], "decision": decision}
+
+    with pytest.raises(ValidationError, match="resolved_entity"):
+        schemas.ResolutionCase.model_validate(payload)
+
+
+def test_failed_reasoner_result_requires_error_classification() -> None:
+    payload = {**reasoner_result_payload(), "status": "failed"}
+
+    with pytest.raises(ValidationError, match="error_classification"):
+        schemas.ReasonerResult.model_validate(payload)
+
+
+@pytest.mark.parametrize("status", ["accepted", "completed"])
+def test_non_failed_reasoner_result_rejects_error_classification(
+    status: str,
+) -> None:
+    payload = {
+        **reasoner_result_payload(),
+        "status": status,
+        "error_classification": reasoner_error_payload(),
+    }
+
+    with pytest.raises(ValidationError, match="error_classification"):
+        schemas.ReasonerResult.model_validate(payload)
+
+
+def test_failed_reasoner_health_requires_error_classification() -> None:
+    payload = {**valid_payloads()["reasoner_health"], "status": "failed"}
+
+    with pytest.raises(ValidationError, match="error_classification"):
+        schemas.ReasonerHealth.model_validate(payload)
+
+
+def test_ok_reasoner_health_rejects_error_classification() -> None:
+    payload = {
+        **valid_payloads()["reasoner_health"],
+        "error_classification": reasoner_error_payload(),
+    }
+
+    with pytest.raises(ValidationError, match="error_classification"):
+        schemas.ReasonerHealth.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "missing_node"),
+    [
+        ("source_node", "missing-source"),
+        ("target_node", "missing-target"),
+    ],
+)
+def test_graph_snapshot_edges_must_reference_declared_nodes(
+    field_name: str,
+    missing_node: str,
+) -> None:
+    payload = valid_payloads()["graph_snapshot"]
+    edges = payload["edges"]
+    assert isinstance(edges, list)
+    edge = edges[0]
+    assert isinstance(edge, dict)
+    edge[field_name] = missing_node
+
+    with pytest.raises(ValidationError, match=field_name):
         schemas.GraphSnapshot.model_validate(payload)
 
 

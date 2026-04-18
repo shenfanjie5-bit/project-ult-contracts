@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from contracts.core import (
     AwareDatetime,
@@ -70,6 +71,22 @@ class ResolutionCase(ContractBaseModel):
     resolved_at: AwareDatetime
     canonical_id_rule_version: VersionString
     resolved_entity: EntityReference | None = None
+
+    @model_validator(mode="after")
+    def resolved_entity_must_match_decision(self) -> Self:
+        """Keep resolution outcomes aligned with the resolved entity field."""
+
+        if self.decision is EntityResolutionDecision.MATCHED:
+            if self.resolved_entity is None:
+                raise ValueError("matched resolution requires resolved_entity")
+            return self
+
+        if self.resolved_entity is not None:
+            raise ValueError(
+                "resolved_entity is only allowed for matched resolution decisions"
+            )
+
+        return self
 
 
 __all__ = [

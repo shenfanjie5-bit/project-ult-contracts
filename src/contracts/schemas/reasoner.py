@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from contracts.core import (
     AwareDatetime,
@@ -75,6 +76,24 @@ class ReasonerResult(ContractBaseModel):
     confidence: Confidence | None = None
     error_classification: ReasonerErrorClassification | None = None
 
+    @model_validator(mode="after")
+    def error_classification_must_match_status(self) -> Self:
+        """Keep result status aligned with error classification details."""
+
+        if self.status is ReasonerStatus.FAILED:
+            if self.error_classification is None:
+                raise ValueError(
+                    "failed reasoner result requires error_classification"
+                )
+            return self
+
+        if self.error_classification is not None:
+            raise ValueError(
+                "error_classification is only allowed for failed reasoner results"
+            )
+
+        return self
+
 
 class ReasonerReplay(ContractBaseModel):
     """Replay bundle for deterministic reasoner-runtime inspection."""
@@ -96,6 +115,25 @@ class ReasonerHealth(ContractBaseModel):
     last_success_at: AwareDatetime | None
     pending_count: int = Field(ge=0, strict=True)
     error_classification: ReasonerErrorClassification | None = None
+
+    @model_validator(mode="after")
+    def error_classification_must_match_status(self) -> Self:
+        """Keep health status aligned with error classification details."""
+
+        if self.status is HeartbeatStatus.FAILED:
+            if self.error_classification is None:
+                raise ValueError(
+                    "failed reasoner health requires error_classification"
+                )
+            return self
+
+        if (
+            self.status is HeartbeatStatus.OK
+            and self.error_classification is not None
+        ):
+            raise ValueError("ok reasoner health must not carry error_classification")
+
+        return self
 
 
 __all__ = [
