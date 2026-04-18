@@ -59,13 +59,39 @@ class GraphSnapshot(ContractBaseModel):
 
     @model_validator(mode="after")
     def counts_must_match_payloads(self) -> Self:
-        """Keep declared snapshot counts aligned with embedded payloads."""
+        """Keep declared snapshot counts and edges aligned with payloads."""
 
         if self.node_count != len(self.nodes):
             raise ValueError("node_count must match number of nodes")
 
         if self.edge_count != len(self.edges):
             raise ValueError("edge_count must match number of edges")
+
+        node_ids = {node.node_id for node in self.nodes}
+        missing_source_nodes = sorted(
+            {
+                edge.source_node
+                for edge in self.edges
+                if edge.source_node not in node_ids
+            }
+        )
+        missing_target_nodes = sorted(
+            {
+                edge.target_node
+                for edge in self.edges
+                if edge.target_node not in node_ids
+            }
+        )
+        if missing_source_nodes or missing_target_nodes:
+            details = []
+            if missing_source_nodes:
+                details.append(f"source_node={', '.join(missing_source_nodes)}")
+            if missing_target_nodes:
+                details.append(f"target_node={', '.join(missing_target_nodes)}")
+            raise ValueError(
+                "graph snapshot edges must reference declared nodes: "
+                + "; ".join(details)
+            )
 
         return self
 
