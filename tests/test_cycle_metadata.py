@@ -61,7 +61,7 @@ def test_cycle_metadata_accepts_in_progress_cycle() -> None:
     assert cycle.phase is schemas.CyclePhase.COLLECTING
     assert cycle.ended_at is None
     assert cycle.previous_cycle_id is None
-    assert cycle.version == "0.1.0"
+    assert cycle.version == "0.1.1"
 
 
 def test_cycle_metadata_accepts_finished_cycle() -> None:

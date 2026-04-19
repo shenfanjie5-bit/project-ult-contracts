@@ -282,7 +282,7 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     assert install_location.is_relative_to(venv_dir.resolve())
     assert metadata == {
         "package": "contracts",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "scripts": {
             "contracts-export": "contracts.export.__main__:main",
             "contracts-compat": "contracts.compat.__main__:main",

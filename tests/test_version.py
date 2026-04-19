@@ -30,10 +30,12 @@ def test_contract_version_entry_is_reexported_from_core(
 ) -> None:
     contracts, core = contracts_modules
 
-    assert contracts.__version__ == "0.1.0"
-    assert core.__version__ == "0.1.0"
+    assert contracts.__version__ == "0.1.1"
+    assert core.__version__ == "0.1.1"
     assert core.CURRENT_VERSION_ENTRY.version == contracts.__version__
-    assert core.CURRENT_VERSION_ENTRY.compatibility_note == "初始骨架版本"
+    assert core.CURRENT_VERSION_ENTRY.compatibility_note == (
+        "下游消费方依赖本版本新增的 schema 导出，向后兼容"
+    )
     assert core.CURRENT_VERSION_ENTRY.breaking is False
 
 
@@ -74,7 +76,7 @@ def test_pyproject_version_matches_contract_version(
     contracts, _ = contracts_modules
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert pyproject["project"]["version"] == contracts.__version__ == "0.1.0"
+    assert pyproject["project"]["version"] == contracts.__version__ == "0.1.1"
 
 
 def test_changelog_contains_initial_version_record() -> None:

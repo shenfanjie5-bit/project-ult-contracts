@@ -175,7 +175,7 @@ def test_schema_artifact_is_a_valid_contract_model() -> None:
     )
 
     assert artifact.artifact_type == "json_schema"
-    assert artifact.version == __version__ == "0.1.0"
+    assert artifact.version == __version__ == "0.1.1"
 
 
 def test_iter_schema_models_returns_stable_registry_order() -> None:
