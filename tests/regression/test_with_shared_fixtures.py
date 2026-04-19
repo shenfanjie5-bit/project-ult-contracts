@@ -3,38 +3,36 @@
 Per SUBPROJECT_TESTING_STANDARD.md §10 ``contracts`` heavy-uses
 ``event_cases`` as the schema-drift baseline. This module:
 
-1. Walks every ``event_cases`` case and re-validates the case's metadata
-   against the contracts schema family expected for entity-resolution
-   payloads (drift in metadata format → fail here, not in 11 downstream
-   regression suites).
-
+1. Walks every ``event_cases`` case and asserts metadata is contract-shaped
+   (drift in metadata format → fail here, not in 11 downstream regression
+   suites).
 2. Confirms the audit_eval_fixtures package is actually installed and the
    import path is correct — without this, every other module's "wire
    shared fixtures" issue would silently no-op.
 
-If audit_eval_fixtures is not installed (e.g. dev forgot the dev extra),
-the whole module skips with a clear message rather than erroring.
+**Hard-import on purpose** (codex review #1, lesson recorded in plan stage 2.1
+followups): per SUBPROJECT_TESTING_STANDARD.md §2.2 + §13.6 the regression
+tier must not depend on the network at runtime AND must really consume the
+fixture corpus. Module-level skip on missing ``audit_eval_fixtures`` would
+let CI report green without ever exercising the corpus. Instead we let
+ImportError bubble so `make regression` / the regression CI lane fail loud.
+
+Install path: ``pip install -e ".[dev,shared-fixtures]"`` or
+``make install-shared``. The default ``dev`` extra deliberately omits
+audit-eval to keep the test-fast / smoke lanes offline-first.
 """
 
 from __future__ import annotations
 
-import pytest
-
-# Soft-skip so the test file itself can be collected when running
-# `pytest tests/unit tests/boundary` (which doesn't need this dep).
-try:
-    from audit_eval_fixtures import (  # noqa: F401
-        Case,
-        CaseRef,
-        iter_cases,
-        list_packs,
-        load_case,
-    )
-except ImportError as exc:
-    pytest.skip(
-        f"audit_eval_fixtures not installed (dev extra?): {exc}",
-        allow_module_level=True,
-    )
+# Hard import — fail collection if shared-fixtures extra is not installed.
+# See module docstring for rationale (codex review finding #1).
+from audit_eval_fixtures import (  # noqa: F401
+    Case,
+    CaseRef,
+    iter_cases,
+    list_packs,
+    load_case,
+)
 
 
 class TestSharedFixturesAreReachable:

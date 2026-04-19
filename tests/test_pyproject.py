@@ -107,13 +107,26 @@ def test_project_runtime_dependencies_match_contract_requirements() -> None:
 def test_dev_dependencies_match_contract_requirements() -> None:
     optional_dependencies = load_pyproject()["project"]["optional-dependencies"]
 
-    # Stage 2 of project-ult test rollout: contracts CI pulls in
-    # audit_eval_fixtures (shipped inside project-ult-audit-eval) for the
-    # canonical-tier regression suite. The exact pin is intentional —
-    # drift would silently invalidate cross-project shared regression.
+    # Per SUBPROJECT_TESTING_STANDARD.md §2.2 + codex review #3 of stage
+    # 2.1: the `dev` extra is offline-first (pure-pip only). Any git+URL
+    # dependency belongs in a separate extra so the test-fast / smoke
+    # CI lanes can stay network-free.
     assert optional_dependencies["dev"] == [
         "pytest>=8",
         "pytest-cov>=4",
+    ]
+
+
+def test_shared_fixtures_extra_pins_audit_eval_to_git_tag() -> None:
+    """The shared-fixtures extra is the ONLY place a git+URL dep lives.
+
+    Drift in either the package name or the tag would silently invalidate
+    cross-project shared regression — the dependency contract is part of
+    the test rollout plan stage 2 baseline, not an internal detail.
+    """
+    optional_dependencies = load_pyproject()["project"]["optional-dependencies"]
+
+    assert optional_dependencies["shared-fixtures"] == [
         (
             "project-ult-audit-eval @ "
             "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.0"

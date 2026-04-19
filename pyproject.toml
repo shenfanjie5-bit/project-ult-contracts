@@ -11,11 +11,18 @@ requires-python = ">=3.12"
 dependencies = ["pydantic>=2.5,<3"]
 
 [project.optional-dependencies]
+# Pure-pip dev tools — no network calls, offline-first per
+# SUBPROJECT_TESTING_STANDARD.md §2.2. Used by the test-fast and smoke
+# CI lanes. Never includes git+URL deps.
 dev = [
     "pytest>=8",
     "pytest-cov>=4",
-    # Shared regression fixtures bundled with project-ult-audit-eval.
-    # Pinned to a git tag so contracts CI doesn't drift with audit-eval main.
+]
+# Shared regression fixtures bundled with project-ult-audit-eval.
+# Separate extra so the regression lane is the only place that pulls in a
+# git+URL dependency. Pinned to a git tag so contracts CI doesn't drift
+# with audit-eval main.
+shared-fixtures = [
     "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.0",
 ]
 

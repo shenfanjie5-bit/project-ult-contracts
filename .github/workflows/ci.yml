@@ -8,6 +8,8 @@ on:
 
 jobs:
   # Existing full-suite lane preserved — runs every existing test.
+  # Includes the shared-fixtures extra so legacy + regression both
+  # exercise the real fixture corpus (no skip).
   ci:
     runs-on: ubuntu-latest
     steps:
@@ -15,14 +17,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install
-        run: pip install -e ".[dev]"
+      - name: Install (full)
+        run: pip install -e ".[dev,shared-fixtures]"
       - name: Tests
         run: python -m pytest
 
-  # Stage-2 plan canonical lanes (project-ult test rollout). Same env as
-  # `ci` but exercises only the canonical-tier subsets, surfacing a fast-
-  # vs slow-lane signal independent of the legacy aggregate.
+  # Stage-2 plan canonical lanes (project-ult test rollout):
+  # - test-fast and smoke install ONLY the pure-pip `dev` extra so they
+  #   stay offline-first per SUBPROJECT_TESTING_STANDARD.md §2.2.
+  # - regression separately installs `shared-fixtures` so it can really
+  #   consume audit_eval_fixtures (no silent module-level skip).
   test-fast:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install
+      - name: Install (offline-first dev only)
         run: pip install -e ".[dev]"
       - name: test-fast (unit + boundary)
         run: make test-fast
@@ -42,13 +46,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install
+      - name: Install (offline-first dev only)
         run: pip install -e ".[dev]"
       - name: smoke
         run: make smoke
 
-  # Regression lane runs the canonical-tier regression suite that
-  # consumes audit_eval_fixtures via the dev extra.
   regression:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +58,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install (with shared fixtures dep)
-        run: pip install -e ".[dev]"
-      - name: regression
+      - name: Install (with shared-fixtures git extra)
+        run: pip install -e ".[dev,shared-fixtures]"
+      - name: regression (must really consume audit_eval_fixtures)
         run: python -m pytest tests/regression -q
