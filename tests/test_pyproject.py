@@ -107,7 +107,18 @@ def test_project_runtime_dependencies_match_contract_requirements() -> None:
 def test_dev_dependencies_match_contract_requirements() -> None:
     optional_dependencies = load_pyproject()["project"]["optional-dependencies"]
 
-    assert optional_dependencies["dev"] == ["pytest>=8", "pytest-cov>=4"]
+    # Stage 2 of project-ult test rollout: contracts CI pulls in
+    # audit_eval_fixtures (shipped inside project-ult-audit-eval) for the
+    # canonical-tier regression suite. The exact pin is intentional —
+    # drift would silently invalidate cross-project shared regression.
+    assert optional_dependencies["dev"] == [
+        "pytest>=8",
+        "pytest-cov>=4",
+        (
+            "project-ult-audit-eval @ "
+            "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.0"
+        ),
+    ]
 
 
 def test_setuptools_uses_src_layout_package_discovery() -> None:
@@ -282,7 +293,7 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     assert install_location.is_relative_to(venv_dir.resolve())
     assert metadata == {
         "package": "contracts",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "scripts": {
             "contracts-export": "contracts.export.__main__:main",
             "contracts-compat": "contracts.compat.__main__:main",

@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator
 from contracts.core.types import AwareDatetime
 
 
-__version__: str = "0.1.1"
+__version__: str = "0.1.2"
 VERSION_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
@@ -31,8 +31,11 @@ class ContractVersionEntry(BaseModel):
 
 CURRENT_VERSION_ENTRY: ContractVersionEntry = ContractVersionEntry(
     version=__version__,
-    released_at=datetime(2026, 4, 18, tzinfo=timezone.utc),
-    compatibility_note="下游消费方依赖本版本新增的 schema 导出，向后兼容",
+    released_at=datetime(2026, 4, 19, tzinfo=timezone.utc),
+    compatibility_note=(
+        "新增 contracts.public 集成入口（health_probe / smoke_hook / "
+        "init_hook / version_declaration / cli），向后兼容；不引入新业务字段"
+    ),
     breaking=False,
 )
 

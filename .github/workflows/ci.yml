@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 jobs:
+  # Existing full-suite lane preserved — runs every existing test.
   ci:
     runs-on: ubuntu-latest
     steps:
@@ -18,3 +19,44 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Tests
         run: python -m pytest
+
+  # Stage-2 plan canonical lanes (project-ult test rollout). Same env as
+  # `ci` but exercises only the canonical-tier subsets, surfacing a fast-
+  # vs slow-lane signal independent of the legacy aggregate.
+  test-fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: test-fast (unit + boundary)
+        run: make test-fast
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: smoke
+        run: make smoke
+
+  # Regression lane runs the canonical-tier regression suite that
+  # consumes audit_eval_fixtures via the dev extra.
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (with shared fixtures dep)
+        run: pip install -e ".[dev]"
+      - name: regression
+        run: python -m pytest tests/regression -q

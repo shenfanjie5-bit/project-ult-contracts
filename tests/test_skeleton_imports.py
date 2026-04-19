@@ -112,7 +112,7 @@ def test_version_constant() -> None:
         contracts = importlib.import_module("contracts")
         core = importlib.import_module("contracts.core")
 
-    assert contracts.__version__ == "0.1.1"
+    assert contracts.__version__ == "0.1.2"
     assert contracts.__version__ == core.CURRENT_VERSION_ENTRY.version
 
 
