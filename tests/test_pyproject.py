@@ -129,7 +129,7 @@ def test_shared_fixtures_extra_pins_audit_eval_to_git_tag() -> None:
     assert optional_dependencies["shared-fixtures"] == [
         (
             "project-ult-audit-eval @ "
-            "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.0"
+            "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.1"
         ),
     ]
 

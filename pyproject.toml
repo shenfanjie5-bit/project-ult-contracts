@@ -23,7 +23,9 @@ dev = [
 # git+URL dependency. Pinned to a git tag so contracts CI doesn't drift
 # with audit-eval main.
 shared-fixtures = [
-    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.0",
+    # Pinned to v0.2.1 (real sha256 fixture hashes; sync with stage 2.2
+    # follow-up so all 12 modules reference the same audit-eval tag).
+    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.1",
 ]
 
 [project.scripts]
