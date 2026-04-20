@@ -50,6 +50,8 @@ EX_PAYLOAD_REQUIRED_FIELDS = {
         "subsystem_id",
     },
     "ex2_candidate_signal": {
+        # v0.1.3: affected_sectors STAYS required; only list min_length=1
+        # was relaxed. Positive coverage in test_ex_payloads.py.
         "signal_id",
         "signal_type",
         "direction",
@@ -175,7 +177,7 @@ def test_schema_artifact_is_a_valid_contract_model() -> None:
     )
 
     assert artifact.artifact_type == "json_schema"
-    assert artifact.version == __version__ == "0.1.2"
+    assert artifact.version == __version__ == "0.1.3"
 
 
 def test_iter_schema_models_returns_stable_registry_order() -> None:

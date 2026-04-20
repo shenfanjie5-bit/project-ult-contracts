@@ -129,7 +129,7 @@ def test_shared_fixtures_extra_pins_audit_eval_to_git_tag() -> None:
     assert optional_dependencies["shared-fixtures"] == [
         (
             "project-ult-audit-eval @ "
-            "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.1"
+            "git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.2"
         ),
     ]
 
@@ -306,7 +306,7 @@ def test_installed_distribution_imports_and_console_scripts_are_invokable(
     assert install_location.is_relative_to(venv_dir.resolve())
     assert metadata == {
         "package": "contracts",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "scripts": {
             "contracts-export": "contracts.export.__main__:main",
             "contracts-compat": "contracts.compat.__main__:main",

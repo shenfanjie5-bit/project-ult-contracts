@@ -30,12 +30,15 @@ def test_contract_version_entry_is_reexported_from_core(
 ) -> None:
     contracts, core = contracts_modules
 
-    assert contracts.__version__ == "0.1.2"
-    assert core.__version__ == "0.1.2"
+    assert contracts.__version__ == "0.1.3"
+    assert core.__version__ == "0.1.3"
     assert core.CURRENT_VERSION_ENTRY.version == contracts.__version__
     assert core.CURRENT_VERSION_ENTRY.compatibility_note == (
-        "新增 contracts.public 集成入口（health_probe / smoke_hook / "
-        "init_hook / version_declaration / cli），向后兼容；不引入新业务字段"
+        "Ex1/Ex2/Ex3 新增可选 producer_context 扩展槽 + Ex1 新增可选 "
+        "evidence 字段 + 放宽 Ex2.affected_sectors 列表 min_length=1 约束（字段"
+        "仍为 required，但接受空列表；元素仍要求 SectorId min_length=1）"
+        "（subsystem-announcement follow-up #3 cross-repo reconciliation；"
+        "纯加法 + 放宽，向后兼容）"
     )
     assert core.CURRENT_VERSION_ENTRY.breaking is False
 
@@ -77,7 +80,7 @@ def test_pyproject_version_matches_contract_version(
     contracts, _ = contracts_modules
     pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert pyproject["project"]["version"] == contracts.__version__ == "0.1.2"
+    assert pyproject["project"]["version"] == contracts.__version__ == "0.1.3"
 
 
 def test_changelog_contains_initial_version_record() -> None:

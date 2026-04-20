@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-ult-contracts"
-version = "0.1.2"
+version = "0.1.3"
 description = "Single source of truth for project-ult cross-module contracts."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -23,9 +23,9 @@ dev = [
 # git+URL dependency. Pinned to a git tag so contracts CI doesn't drift
 # with audit-eval main.
 shared-fixtures = [
-    # Pinned to v0.2.1 (real sha256 fixture hashes; sync with stage 2.2
-    # follow-up so all 12 modules reference the same audit-eval tag).
-    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.1",
+    # Pinned to v0.2.2 (Pre-step 2 added case_ex3_negative for announcement
+    # Ex-3 high-threshold red line; backward compatible with v0.2.1 case set).
+    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.2",
 ]
 
 [project.scripts]

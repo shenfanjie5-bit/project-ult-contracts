@@ -65,6 +65,10 @@ def test_ex2_candidate_signal_accepts_valid_payload() -> None:
 @pytest.mark.parametrize(
     "field_name",
     [
+        # v0.1.3: affected_sectors STAYS required (presence guaranteed for
+        # consumers). What changed: list min_length=1 → no min_length, so
+        # empty list [] is now valid. Positive coverage:
+        # test_ex_payloads.py::test_ex2_affected_sectors_empty_list_is_valid.
         "signal_id",
         "signal_type",
         "direction",
@@ -95,7 +99,10 @@ def test_ex2_candidate_signal_required_fields_are_enforced(
         ("direction", "sideways"),
         ("magnitude", -0.01),
         ("affected_entities", []),
-        ("affected_sectors", []),
+        # affected_sectors=[] is now ACCEPTED as of v0.1.3 (field stays
+        # required, but list-level min_length=1 constraint was removed;
+        # element SectorId min_length=1 still applies). Positive coverage
+        # in test_ex_payloads.py::test_ex2_affected_sectors_empty_list_is_valid.
         ("time_horizon", ""),
         ("evidence", []),
         ("confidence", -0.01),
@@ -132,6 +139,8 @@ def test_ex2_candidate_signal_json_schema_contract() -> None:
 
     assert set(schema["required"]).issuperset(
         {
+            # v0.1.3: affected_sectors STAYS required (presence preserved
+            # for consumers); list min_length=1 was the only relaxation.
             "signal_id",
             "signal_type",
             "direction",
