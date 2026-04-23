@@ -23,9 +23,12 @@ dev = [
 # git+URL dependency. Pinned to a git tag so contracts CI doesn't drift
 # with audit-eval main.
 shared-fixtures = [
-    # Pinned to v0.2.2 (Pre-step 2 added case_ex3_negative for announcement
-    # Ex-3 high-threshold red line; backward compatible with v0.2.1 case set).
-    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.2",
+    # Pinned to v0.2.4 (project-wide canonical_entity_id format
+    # reconciliation: every shared case now uses the runtime-aligned
+    # dot form ENT_STOCK_<symbol>.<exchange>; backward compatible with
+    # v0.2.1 / v0.2.2 case set + adds the case_tushare_* cases shipped
+    # in v0.2.3).
+    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.4",
 ]
 
 [project.scripts]
