@@ -154,6 +154,11 @@ def _schema_fragment_matches(
         if "const" in field_schema and value != field_schema["const"]:
             return False
 
+        min_items = field_schema.get("minItems")
+        if isinstance(min_items, int) and isinstance(value, list):
+            if len(value) < min_items:
+                return False
+
     return True
 
 
@@ -164,6 +169,18 @@ def assert_exported_schema_rejects_with_conditional_rule(
     rules = schema.get("allOf")
     assert isinstance(rules, list)
     assert any(
+        isinstance(rule, dict) and conditional_rule_rejects(rule, payload)
+        for rule in rules
+    )
+
+
+def assert_exported_schema_allows_conditional_rules(
+    schema: dict[str, object],
+    payload: dict[str, object],
+) -> None:
+    rules = schema.get("allOf")
+    assert isinstance(rules, list)
+    assert not any(
         isinstance(rule, dict) and conditional_rule_rejects(rule, payload)
         for rule in rules
     )
@@ -328,6 +345,37 @@ def test_exported_json_schema_encodes_resolution_case_invariants(
                 "entity_type": "equity",
                 "canonical_id_rule_version": "0.1.0",
             },
+        },
+    )
+    assert_exported_schema_rejects_with_conditional_rule(
+        schema,
+        {
+            **base_payload,
+            "resolved_entity": {
+                "entity_id": "AAPL",
+                "entity_type": "equity",
+                "canonical_id_rule_version": "0.1.0",
+            },
+            "candidate_entities": [],
+        },
+    )
+    assert_exported_schema_rejects_with_conditional_rule(
+        schema,
+        {
+            **base_payload,
+            "decision": "ambiguous",
+            "resolved_entity": None,
+            "candidate_entities": [],
+        },
+    )
+    assert_exported_schema_allows_conditional_rules(
+        schema,
+        {
+            **base_payload,
+            "decision": "unresolved",
+            "confidence": 0.0,
+            "resolved_entity": None,
+            "candidate_entities": [],
         },
     )
 

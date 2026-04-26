@@ -360,8 +360,33 @@ def _compare_schema(
             events,
         )
 
-    _compare_enums(schema_name, baseline_schema, current_schema, events)
-    _compare_contract_extensions(schema_name, baseline_schema, current_schema, events)
+    allowed_resolution_case_relaxation = (
+        _is_resolution_case_candidate_entities_relaxation(
+            schema_name,
+            baseline_schema,
+            current_schema,
+        )
+    )
+    ignored_enum_pointers = (
+        frozenset({"/allOf/1/if/properties/decision/enum"})
+        if allowed_resolution_case_relaxation
+        else frozenset()
+    )
+
+    _compare_enums(
+        schema_name,
+        baseline_schema,
+        current_schema,
+        events,
+        ignored_pointers=ignored_enum_pointers,
+    )
+    _compare_contract_extensions(
+        schema_name,
+        baseline_schema,
+        current_schema,
+        events,
+        allowed_resolution_case_relaxation=allowed_resolution_case_relaxation,
+    )
 
 
 def _compare_property_shape(
@@ -422,12 +447,23 @@ def _compare_contract_extensions(
     baseline_schema: Mapping[str, object],
     current_schema: Mapping[str, object],
     events: list[CompatibilityEvent],
+    *,
+    allowed_resolution_case_relaxation: bool = False,
 ) -> None:
     baseline_extensions = _collect_contract_extension_values(baseline_schema)
     current_extensions = _collect_contract_extension_values(current_schema)
 
     for pointer in sorted(set(baseline_extensions).union(current_extensions)):
         if baseline_extensions.get(pointer) == current_extensions.get(pointer):
+            continue
+        if (
+            pointer == "/allOf"
+            and allowed_resolution_case_relaxation
+            and _resolution_case_all_of_relaxation_is_exact(
+                baseline_schema,
+                current_schema,
+            )
+        ):
             continue
 
         events.append(
@@ -470,11 +506,15 @@ def _compare_enums(
     baseline_schema: Mapping[str, object],
     current_schema: Mapping[str, object],
     events: list[CompatibilityEvent],
+    *,
+    ignored_pointers: frozenset[str] = frozenset(),
 ) -> None:
     baseline_enums = _collect_enums(baseline_schema)
     current_enums = _collect_enums(current_schema)
 
     for pointer in sorted(set(baseline_enums).union(current_enums)):
+        if pointer in ignored_pointers:
+            continue
         baseline_values = baseline_enums.get(pointer, ())
         current_values = current_enums.get(pointer, ())
 
@@ -528,6 +568,101 @@ def _collect_enums(value: object, pointer: str = "") -> dict[str, tuple[object, 
             enums.update(_collect_enums(child, child_pointer))
 
     return enums
+
+
+_RESOLUTION_CASE_LEGACY_ALLOF: list[dict[str, object]] = [
+    {
+        "if": {"properties": {"decision": {"const": "matched"}}},
+        "then": {
+            "properties": {"resolved_entity": {"not": {"type": "null"}}},
+            "required": ["resolved_entity"],
+        },
+    },
+    {
+        "if": {
+            "properties": {
+                "decision": {"enum": ["ambiguous", "unresolved"]},
+            }
+        },
+        "then": {"properties": {"resolved_entity": {"type": "null"}}},
+    },
+]
+
+_RESOLUTION_CASE_RELAXED_ALLOF: list[dict[str, object]] = [
+    {
+        "if": {"properties": {"decision": {"const": "matched"}}},
+        "then": {
+            "properties": {
+                "candidate_entities": {"minItems": 1},
+                "resolved_entity": {"not": {"type": "null"}},
+            },
+            "required": ["resolved_entity"],
+        },
+    },
+    {
+        "if": {"properties": {"decision": {"const": "ambiguous"}}},
+        "then": {
+            "properties": {
+                "candidate_entities": {"minItems": 1},
+                "resolved_entity": {"type": "null"},
+            },
+        },
+    },
+    {
+        "if": {"properties": {"decision": {"const": "unresolved"}}},
+        "then": {"properties": {"resolved_entity": {"type": "null"}}},
+    },
+]
+
+
+def _is_resolution_case_candidate_entities_relaxation(
+    schema_name: str,
+    baseline_schema: Mapping[str, object],
+    current_schema: Mapping[str, object],
+) -> bool:
+    """Allow the approved v0.1.3 ResolutionCase no-candidate relaxation.
+
+    The v0.1.0 export had ``candidate_entities.minItems=1`` globally.
+    Runtime v0.1.3 relaxed only the unresolved branch so unresolved/no-
+    candidate cases are valid, while matched and ambiguous still require
+    candidates. This is a compatibility relaxation, not a breaking schema
+    invariant change, as long as the current JSON Schema encodes exactly
+    that conditional shape.
+    """
+
+    if schema_name != "resolution_case":
+        return False
+
+    baseline_candidates = _schema_property(baseline_schema, "candidate_entities")
+    current_candidates = _schema_property(current_schema, "candidate_entities")
+    if baseline_candidates.get("minItems") != 1:
+        return False
+    if "minItems" in current_candidates:
+        return False
+
+    return _resolution_case_all_of_relaxation_is_exact(
+        baseline_schema,
+        current_schema,
+    )
+
+
+def _resolution_case_all_of_relaxation_is_exact(
+    baseline_schema: Mapping[str, object],
+    current_schema: Mapping[str, object],
+) -> bool:
+    return (
+        baseline_schema.get("allOf") == _RESOLUTION_CASE_LEGACY_ALLOF
+        and current_schema.get("allOf") == _RESOLUTION_CASE_RELAXED_ALLOF
+    )
+
+
+def _schema_property(
+    schema: Mapping[str, object],
+    property_name: str,
+) -> Mapping[str, object]:
+    return _object_mapping(
+        _object_mapping(schema.get("properties")).get(property_name)
+    )
 
 
 def _read_json_object(path: Path) -> dict[str, object]:

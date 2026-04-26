@@ -72,6 +72,42 @@ def compare_export_dirs(
     )
 
 
+def compare_committed_baseline_to_current(
+    current: pathlib.Path,
+) -> CompatibilityCheckResult:
+    return compare_export_dirs(
+        PROJECT_ROOT / "artifacts/baselines/0.1.0/json_schema",
+        current,
+    )
+
+
+def export_current_resolution_case_schema(tmp_path: pathlib.Path) -> pathlib.Path:
+    current = tmp_path / "current"
+    export_json_schemas(current, version="0.1.0")
+    return current
+
+
+def resolution_case_rule(
+    schema: dict[str, object],
+    decision: str,
+) -> dict[str, object]:
+    all_of = schema["allOf"]
+    assert isinstance(all_of, list)
+
+    for rule in all_of:
+        assert isinstance(rule, dict)
+        condition = rule["if"]
+        assert isinstance(condition, dict)
+        properties = condition["properties"]
+        assert isinstance(properties, dict)
+        decision_schema = properties["decision"]
+        assert isinstance(decision_schema, dict)
+        if decision_schema.get("const") == decision:
+            return rule
+
+    raise AssertionError(f"missing ResolutionCase rule for decision={decision!r}")
+
+
 def change_types(result: CompatibilityCheckResult) -> set[str]:
     return {event.change_type for event in result.events}
 
@@ -308,6 +344,103 @@ def test_compare_schema_sets_detects_schema_invariant_changes(
 
     assert not result.is_compatible
     assert "schema_invariant_changed" in change_types(result)
+
+
+def test_compare_schema_sets_allows_resolution_case_unresolved_relaxation(
+    tmp_path: pathlib.Path,
+) -> None:
+    current = export_current_resolution_case_schema(tmp_path)
+    result = compare_committed_baseline_to_current(current)
+
+    assert result.is_compatible
+    assert not [
+        event
+        for event in result.events
+        if event.schema_name == "resolution_case" and event.breaking
+    ]
+
+
+def test_compare_schema_sets_rejects_extra_resolution_case_all_of_rule(
+    tmp_path: pathlib.Path,
+) -> None:
+    current = export_current_resolution_case_schema(tmp_path)
+
+    def add_extra_rule(schema: dict[str, object]) -> None:
+        all_of = schema["allOf"]
+        assert isinstance(all_of, list)
+        all_of.append(
+            {
+                "if": {"properties": {"decision": {"const": "matched"}}},
+                "then": {"properties": {"confidence": {"minimum": 0.95}}},
+            }
+        )
+
+    mutate_schema(current, "resolution_case", add_extra_rule)
+    result = compare_committed_baseline_to_current(current)
+
+    assert not result.is_compatible
+    assert any(
+        event.schema_name == "resolution_case"
+        and event.change_type == "schema_invariant_changed"
+        and event.json_pointer == "/allOf"
+        for event in result.events
+    )
+
+
+def test_compare_schema_sets_rejects_missing_resolution_case_all_of_rule(
+    tmp_path: pathlib.Path,
+) -> None:
+    current = export_current_resolution_case_schema(tmp_path)
+
+    def remove_unresolved_rule(schema: dict[str, object]) -> None:
+        all_of = schema["allOf"]
+        assert isinstance(all_of, list)
+        all_of.remove(resolution_case_rule(schema, "unresolved"))
+
+    mutate_schema(current, "resolution_case", remove_unresolved_rule)
+    result = compare_committed_baseline_to_current(current)
+
+    assert not result.is_compatible
+    assert any(
+        event.schema_name == "resolution_case"
+        and event.change_type == "schema_invariant_changed"
+        and event.json_pointer == "/allOf"
+        for event in result.events
+    )
+
+
+@pytest.mark.parametrize("decision", ["matched", "ambiguous"])
+@pytest.mark.parametrize("min_items", [None, 2])
+def test_compare_schema_sets_rejects_changed_resolution_case_candidate_min_items(
+    tmp_path: pathlib.Path,
+    decision: str,
+    min_items: int | None,
+) -> None:
+    current = export_current_resolution_case_schema(tmp_path)
+
+    def change_min_items(schema: dict[str, object]) -> None:
+        rule = resolution_case_rule(schema, decision)
+        then = rule["then"]
+        assert isinstance(then, dict)
+        properties = then["properties"]
+        assert isinstance(properties, dict)
+        candidate_entities = properties["candidate_entities"]
+        assert isinstance(candidate_entities, dict)
+        if min_items is None:
+            candidate_entities.pop("minItems")
+        else:
+            candidate_entities["minItems"] = min_items
+
+    mutate_schema(current, "resolution_case", change_min_items)
+    result = compare_committed_baseline_to_current(current)
+
+    assert not result.is_compatible
+    assert any(
+        event.schema_name == "resolution_case"
+        and event.change_type == "schema_invariant_changed"
+        and event.json_pointer == "/allOf"
+        for event in result.events
+    )
 
 
 def test_compare_schema_sets_compares_enum_values_conservatively(

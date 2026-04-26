@@ -89,11 +89,23 @@ _RESOLUTION_CASE_RULES: tuple[dict[str, object], ...] = (
         "if": {"properties": {"decision": {"const": "matched"}}},
         "then": {
             "required": ["resolved_entity"],
-            "properties": {"resolved_entity": {"not": {"type": "null"}}},
+            "properties": {
+                "resolved_entity": {"not": {"type": "null"}},
+                "candidate_entities": {"minItems": 1},
+            },
         },
     },
     {
-        "if": {"properties": {"decision": {"enum": ["ambiguous", "unresolved"]}}},
+        "if": {"properties": {"decision": {"const": "ambiguous"}}},
+        "then": {
+            "properties": {
+                "resolved_entity": {"type": "null"},
+                "candidate_entities": {"minItems": 1},
+            },
+        },
+    },
+    {
+        "if": {"properties": {"decision": {"const": "unresolved"}}},
         "then": {"properties": {"resolved_entity": {"type": "null"}}},
     },
 )
