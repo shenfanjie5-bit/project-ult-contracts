@@ -257,6 +257,17 @@ def test_exported_json_schemas_include_contract_metadata(tmp_path: Path) -> None
         )
 
 
+def test_default_export_metadata_matches_package_version(tmp_path: Path) -> None:
+    export_json_schemas(tmp_path)
+    manifest = load_json(tmp_path / "manifest.json")
+
+    assert manifest["version"] == __version__
+    for artifact in manifest["artifacts"]:
+        assert artifact["version"] == __version__
+        schema = load_json(tmp_path / f"{artifact['name']}.schema.json")
+        assert schema["x-contract-version"] == __version__
+
+
 def test_exported_ex_payload_required_fields_match_contracts(tmp_path: Path) -> None:
     export_json_schemas(tmp_path, version="0.1.0")
 

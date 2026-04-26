@@ -79,8 +79,6 @@ def export_baseline(output_dir: pathlib.Path, python_bin: str) -> None:
             "contracts.export",
             "--output-dir",
             str(output_dir),
-            "--version",
-            "0.1.0",
         ],
         cwd=PROJECT_ROOT,
         env=environment,
@@ -114,7 +112,7 @@ def run_ci_script(
         environment.pop("CONTRACTS_BASELINE", None)
     else:
         environment["CONTRACTS_BASELINE"] = str(baseline)
-    environment["CONTRACTS_VERSION"] = "0.1.0"
+    environment.pop("CONTRACTS_VERSION", None)
 
     result = subprocess.run(
         ["bash", str(CI_SCRIPT)],
@@ -129,7 +127,7 @@ def run_ci_script(
         "pip",
         "install",
         "-e",
-        ".[dev]",
+        ".[dev,shared-fixtures]",
     ]
     return result
 

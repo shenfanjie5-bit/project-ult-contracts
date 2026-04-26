@@ -519,9 +519,11 @@ def test_ci_script_is_executable_and_runs_stage_two_checks() -> None:
 
     assert os.access(ci_script, os.X_OK)
     assert "set -euo pipefail" in script
-    assert "-m pip install -e '.[dev]'" in script
+    assert "-m pip install -e '.[dev,shared-fixtures]'" in script
     assert "PYTHONPATH" not in script
     assert "contracts, contracts.schemas, contracts.protocols" in script
+    assert "contracts.__version__" in script
+    assert "CONTRACTS_VERSION:-0.1.0" not in script
     assert "-m pytest --collect-only -q" in script
     assert "-m pytest -q" in script
     assert "-m contracts.export" in script

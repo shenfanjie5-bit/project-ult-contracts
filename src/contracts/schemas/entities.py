@@ -69,7 +69,7 @@ class ResolutionCase(ContractBaseModel):
     input_alias: NonEmptyString
     decision: EntityResolutionDecision
     confidence: Confidence
-    candidate_entities: list[EntityReference] = Field(min_length=1)
+    candidate_entities: list[EntityReference]
     evidence_refs: list[EvidenceRef] = Field(min_length=1)
     resolved_at: AwareDatetime
     canonical_id_rule_version: VersionString
@@ -82,9 +82,22 @@ class ResolutionCase(ContractBaseModel):
         if self.decision is EntityResolutionDecision.MATCHED:
             if self.resolved_entity is None:
                 raise ValueError("matched resolution requires resolved_entity")
-            return self
+        if (
+            self.decision
+            in {
+                EntityResolutionDecision.MATCHED,
+                EntityResolutionDecision.AMBIGUOUS,
+            }
+            and not self.candidate_entities
+        ):
+            raise ValueError(
+                "candidate_entities may be empty only for unresolved decisions"
+            )
 
-        if self.resolved_entity is not None:
+        if (
+            self.decision is not EntityResolutionDecision.MATCHED
+            and self.resolved_entity is not None
+        ):
             raise ValueError(
                 "resolved_entity is only allowed for matched resolution decisions"
             )

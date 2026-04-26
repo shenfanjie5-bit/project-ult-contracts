@@ -35,7 +35,9 @@ CURRENT_VERSION_ENTRY: ContractVersionEntry = ContractVersionEntry(
     compatibility_note=(
         "Ex1/Ex2/Ex3 新增可选 producer_context 扩展槽 + Ex1 新增可选 "
         "evidence 字段 + 放宽 Ex2.affected_sectors 列表 min_length=1 约束（字段"
-        "仍为 required，但接受空列表；元素仍要求 SectorId min_length=1）"
+        "仍为 required，但接受空列表；元素仍要求 SectorId min_length=1）+ "
+        "ResolutionCase 正式允许 unresolved/no-candidate 空候选列表，同时 "
+        "matched/ambiguous 仍要求 candidate_entities 非空"
         "（subsystem-announcement follow-up #3 cross-repo reconciliation；"
         "纯加法 + 放宽，向后兼容）"
     ),

@@ -1,8 +1,8 @@
 # 项目进度跟踪 — contracts
 
 > **文档状态**：Draft v1
-> **版本**：0.1.0
-> **最后更新**：2026-04-15
+> **版本**：0.1.3
+> **最后更新**：2026-04-27
 > **用途**：跟踪 `contracts` 子项目各阶段与 issue 的交付状态。每次 issue 状态变化时同步更新本文件。
 
 ---
@@ -36,8 +36,8 @@
 
 阶段 0 验收：
 - [x] 全部 5 个 issue 通过各自验收标准（GH #2–GH #6 / ISSUE-001–ISSUE-005）
-- [x] `python -c "import contracts"` 成功，`contracts.__version__ == "0.1.0"`
-- [x] `bash scripts/ci.sh` 入口存在并执行 `pip install -e .[dev]` 与 `pytest -q`
+- [x] `python -c "import contracts"` 成功，`contracts.__version__ == "0.1.3"`
+- [x] `bash scripts/ci.sh` 入口存在并执行 `pip install -e .[dev,shared-fixtures]`、全量 `pytest -q`、JSON Schema export 和 compat
 - [x] README / MODULE_SPEC / TESTPLAN 三份文档就绪
 
 ---
@@ -153,11 +153,11 @@
 - [x] `fixtures/` 覆盖全部 Ex / formal object / cycle 对象
 
 阶段 2 当前验收证据：
-- [x] GH #20 / ISSUE-019：`SCHEMA_MODEL_REGISTRY` 当前导出 16 个 Pydantic JSON Schema；`tests/test_export_json_schema_contract.py` 与 `tests/test_export_cli.py` 覆盖 registry、manifest、schema metadata 与 CLI 入口。
+- [x] GH #20 / ISSUE-019：`SCHEMA_MODEL_REGISTRY` 当前导出 28 个 Pydantic JSON Schema；`tests/test_export_json_schema_contract.py` 与 `tests/test_export_cli.py` 覆盖 registry、manifest、schema metadata 与 CLI 入口。
 - [x] GH #21 / ISSUE-020：`tests/test_compat_rules.py` 与 `tests/test_compat_cli.py` 覆盖删除 schema、删除字段、required 变更、字段类型 / `$ref` / `anyOf` 变更和 enum 变更。
 - [x] GH #22 / ISSUE-021：`fixtures/manifest.json` 与 `tests/test_contract_fixtures.py` 覆盖 Ex-0~Ex-3、formal objects 与 cycle fixture 校验。
 - [x] GH #23 / ISSUE-022：`scripts/ci.sh` 按 editable install、import smoke、pytest collect、pytest、JSON Schema 导出、compat gate 顺序执行；`PYTHONPATH=src python3 -m pytest -q tests/test_ci_pipeline.py` 通过，覆盖匹配 baseline 通过与 breaking baseline 失败。
-- [x] GH #24 / ISSUE-023：`PYTHONPATH=src python3 -m pytest -q -s tests/test_milestone2_performance.py` 通过；Python 3.14.3 下导出 16 个 schema 耗时 `0.004220s`，同源兼容检查耗时 `0.001465s`，breaking-change 检查耗时 `0.001262s`。
+- [x] GH #24 / ISSUE-023：`PYTHONPATH=src python3 -m pytest -q -s tests/test_milestone2_performance.py` 通过；当前 registry 导出 28 个 schema，同源兼容检查和 breaking-change 检查维持毫秒级。
 
 ---
 

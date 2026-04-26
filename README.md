@@ -1,5 +1,5 @@
 > 文档状态: Draft
-> 版本: 0.1.0
+> 版本: 0.1.3
 
 # contracts
 
@@ -38,18 +38,18 @@
 本项目要求 Python 3.12+，运行时依赖 Pydantic v2，开发测试依赖 pytest。
 
 ```bash
-pip install -e .[dev]
+pip install -e .[dev,shared-fixtures]
 pytest
 ```
 
-阶段 2 后，JSON Schema 导出和兼容性检查命令会成为正式 gate：
+JSON Schema 导出和兼容性检查是默认 CI gate：
 
 ```bash
-python -m contracts.export --output-dir ./artifacts --version 0.1.0
-python -m contracts.compat --baseline 0.1.0 --current HEAD
+python -m contracts.export --output-dir ./artifacts/json_schema
+python -m contracts.compat --baseline artifacts/baselines/0.1.0/json_schema --current HEAD
 ```
 
-当前 `0.1.0` 是阶段 0 骨架版本，CLI 入口只保证可导入，具体实现留给后续阶段。
+当前 package version 由 `contracts.__version__` 统一声明；导出 metadata 默认使用同一版本，避免 CLI/包版本漂移。
 
 ## 目录结构
 

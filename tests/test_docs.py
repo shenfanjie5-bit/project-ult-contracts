@@ -3,6 +3,8 @@ from __future__ import annotations
 import pathlib
 import re
 
+from contracts import __version__
+
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = PROJECT_ROOT / "README.md"
@@ -22,19 +24,23 @@ def section_between(text: str, start_heading: str, end_heading: str) -> str:
 
 
 def test_stage_zero_docs_start_with_required_metadata() -> None:
-    for path in [README, MODULE_SPEC, TESTPLAN]:
+    for path, expected_version in [
+        (README, __version__),
+        (MODULE_SPEC, "0.1.0"),
+        (TESTPLAN, "0.1.0"),
+    ]:
         lines = read_text(path).splitlines()
 
         assert lines[0] == "> 文档状态: Draft"
-        assert lines[1] == "> 版本: 0.1.0"
+        assert lines[1] == f"> 版本: {expected_version}"
 
 
 def test_readme_contains_issue_required_quickstart_and_references() -> None:
     readme = read_text(README)
 
     assert "contracts" in readme
-    assert "0.1.0" in readme
-    assert "pip install -e .[dev]" in readme
+    assert __version__ in readme
+    assert "pip install -e .[dev,shared-fixtures]" in readme
     assert "合同真相源：`src/contracts/schemas`" in readme
     assert "导出产物：`artifacts/json_schema/`（阶段 2 生成）" in readme
     assert "[完整项目文档](docs/contracts.project-doc.md)" in readme
@@ -130,7 +136,7 @@ def test_progress_marks_completed_stage_zero_without_ambiguous_issue_ids() -> No
     ci_script = PROJECT_ROOT / "scripts" / "ci.sh"
     ci_script_text = read_text(ci_script)
     assert ci_script.is_file()
-    assert "-m pip install -e '.[dev]'" in ci_script_text
+    assert "-m pip install -e '.[dev,shared-fixtures]'" in ci_script_text
     assert "pytest -q" in ci_script_text
     assert README.is_file()
     assert MODULE_SPEC.is_file()

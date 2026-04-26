@@ -292,6 +292,38 @@ def test_resolution_case_unmatched_decision_rejects_resolved_entity(
         schemas.ResolutionCase.model_validate(payload)
 
 
+def test_resolution_case_unresolved_allows_no_candidate_entities() -> None:
+    payload = {
+        **valid_payloads()["resolution_case"],
+        "decision": "unresolved",
+        "candidate_entities": [],
+        "confidence": 0.0,
+        "resolved_entity": None,
+    }
+
+    case = schemas.ResolutionCase.model_validate(payload)
+
+    assert case.decision is schemas.EntityResolutionDecision.UNRESOLVED
+    assert case.candidate_entities == []
+    assert case.resolved_entity is None
+
+
+@pytest.mark.parametrize("decision", ["matched", "ambiguous"])
+def test_resolution_case_candidate_entities_required_unless_unresolved(
+    decision: str,
+) -> None:
+    payload = {
+        **valid_payloads()["resolution_case"],
+        "decision": decision,
+        "candidate_entities": [],
+    }
+    if decision == "ambiguous":
+        payload["resolved_entity"] = None
+
+    with pytest.raises(ValidationError, match="candidate_entities"):
+        schemas.ResolutionCase.model_validate(payload)
+
+
 def test_failed_reasoner_result_requires_error_classification() -> None:
     payload = {**reasoner_result_payload(), "status": "failed"}
 
