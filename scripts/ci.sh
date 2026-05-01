@@ -5,7 +5,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${PROJECT_ROOT}"
 
 PYTHON_BIN="${PYTHON:-python3}"
-CONTRACTS_BASELINE="${CONTRACTS_BASELINE:-artifacts/baselines/0.1.0/json_schema}"
+CONTRACTS_BASELINE="${CONTRACTS_BASELINE:-artifacts/baselines/0.1.3/json_schema}"
 
 "${PYTHON_BIN}" -m pip install -e '.[dev,shared-fixtures]'
 

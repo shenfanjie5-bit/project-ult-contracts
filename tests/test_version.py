@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import pathlib
 import sys
 import tomllib
@@ -90,3 +91,44 @@ def test_changelog_contains_initial_version_record() -> None:
 
     assert "0.1.0" in changelog
     assert "2026-04-15" in changelog
+
+
+def _semver_tuple(version: str) -> tuple[int, int, int]:
+    return tuple(int(part) for part in version.split("."))  # type: ignore[return-value]
+
+
+def test_latest_json_schema_baseline_matches_contract_version(
+    contracts_modules: tuple[object, object],
+) -> None:
+    """Stage 1 consistency lane (M4): the highest-version baseline directory
+    under both artifacts/ and src/contracts/baselines/ must equal
+    `contracts.__version__`, and that baseline's `manifest.json` version
+    must also match. Prevents the v0.1.0 baseline from silently outliving
+    the canonical Pydantic source (the gap the audit identified).
+    """
+
+    contracts, _ = contracts_modules
+
+    for baseline_root in (
+        PROJECT_ROOT / "artifacts" / "baselines",
+        SRC_DIR / "contracts" / "baselines",
+    ):
+        assert baseline_root.is_dir(), f"missing baseline root: {baseline_root}"
+
+        version_dirs = sorted(
+            (entry.name for entry in baseline_root.iterdir() if entry.is_dir()),
+            key=_semver_tuple,
+        )
+        assert version_dirs, f"no baseline directories under {baseline_root}"
+
+        latest = version_dirs[-1]
+        assert latest == contracts.__version__, (
+            f"baseline root {baseline_root} latest dir is {latest!r} but "
+            f"contracts.__version__ is {contracts.__version__!r}"
+        )
+
+        manifest_path = baseline_root / latest / "json_schema" / "manifest.json"
+        assert manifest_path.is_file(), f"missing manifest: {manifest_path}"
+
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["version"] == contracts.__version__

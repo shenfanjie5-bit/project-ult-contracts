@@ -12,7 +12,7 @@ import sys
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
 CI_SCRIPT = PROJECT_ROOT / "scripts" / "ci.sh"
-DEFAULT_BASELINE = PROJECT_ROOT / "artifacts" / "baselines" / "0.1.0" / "json_schema"
+DEFAULT_BASELINE = PROJECT_ROOT / "artifacts" / "baselines" / "0.1.3" / "json_schema"
 
 
 def ci_python() -> str:
