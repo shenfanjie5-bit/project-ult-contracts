@@ -23,12 +23,11 @@ dev = [
 # git+URL dependency. Pinned to a git tag so contracts CI doesn't drift
 # with audit-eval main.
 shared-fixtures = [
-    # Pinned to v0.2.4 (project-wide canonical_entity_id format
-    # reconciliation: every shared case now uses the runtime-aligned
-    # dot form ENT_STOCK_<symbol>.<exchange>; backward compatible with
-    # v0.2.1 / v0.2.2 case set + adds the case_tushare_* cases shipped
-    # in v0.2.3).
-    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.4",
+    # Pinned to v0.2.5 (carries forward v0.2.4 dot-form canonical_entity_id
+    # reconciliation, v0.2.1/v0.2.2 case set, and v0.2.3 case_tushare_* cases;
+    # bumped 2026-05-01 stage 1 consistency lane to align with audit-eval
+    # producer release).
+    "project-ult-audit-eval @ git+https://github.com/shenfanjie5-bit/project-ult-audit-eval.git@v0.2.5",
 ]
 
 [project.scripts]
